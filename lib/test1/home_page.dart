@@ -1,41 +1,14 @@
 import 'package:flutter/material.dart';
-import 'app_bottom_nav.dart';
 
 class HomePageClean extends StatelessWidget {
   const HomePageClean({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0E8DD),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFFF0E8DD),
-        centerTitle: true,
-        title: const Text(
-          '홈',
-          style: TextStyle(
-            fontSize: 16,
-            fontFamily: 'Epilogue',
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        leading: IconButton(
-          onPressed: () {
-            // 홈에서는 딱히 할 거 없음
-          },
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings, color: Colors.black),
-          )
-        ],
-      ),
-
-      body: SingleChildScrollView(
+    // ✅ 여기서는 Scaffold / AppBar 없이 "내용"만 구성
+    return Container(
+      color: const Color(0xFFF0E8DD),  // 원래 배경색 유지
+      child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
@@ -120,7 +93,7 @@ class HomePageClean extends StatelessWidget {
                           Text(
                             '매일 30분 이상 산책을 시켜주면\n'
                                 '반려견의 스트레스 해소와 건강에 좋아요.\n'
-                            '정우는 정우얌 > ㅅ < ',
+                                '정우는 정우얌 > ㅅ < ',
                             style: TextStyle(
                               fontSize: 12,
                               height: 1.4,
@@ -148,17 +121,6 @@ class HomePageClean extends StatelessWidget {
             ],
           ),
         ),
-      ),
-
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: 0, // 홈 탭 선택
-        onItemSelected: (index) {
-          if (index == 0) return; // 이미 홈
-          if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/board');
-          }
-          // 나중에 다른 탭들도 라우트 추가하면 여기서 처리
-        },
       ),
     );
   }

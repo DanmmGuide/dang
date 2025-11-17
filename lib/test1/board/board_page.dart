@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app_bottom_nav.dart';
 import 'write_post_page.dart';
 import 'post.dart';
 import 'board_detail_page.dart';
@@ -31,8 +30,6 @@ class _BoardPageState extends State<BoardPage> {
     PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
     PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
     PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-
-
   ];
 
   String _selectedFilter = '전체';
@@ -81,170 +78,148 @@ class _BoardPageState extends State<BoardPage> {
     final endIndex = (startIndex + _pageSize).clamp(0, posts.length);
     final pagedPosts = posts.sublist(startIndex, endIndex);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0E8DD),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFFF0E8DD),
-        centerTitle: true,
-        title: const Text(
-          '게시판',
-          style: TextStyle(
-            fontSize: 16,
-            fontFamily: 'Epilogue',
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-      ),
-
-      body: Column(
+    // ❗ 여기서는 더 이상 Scaffold 쓰지 않고, body만 리턴한다.
+    return Container(
+      color: const Color(0xFFF0E8DD),
+      child: Stack(
         children: [
-          const SizedBox(height: 8),
-
-          // 게시글 리스트
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: pagedPosts.length,
-              itemBuilder: (context, index) {
-                final post = pagedPosts[index];
-                return _PostCard(
-                  post: post,
-                  onTap: () => _openPostDetail(post),
-                );
-
-              },
-            ),
-          ),
-
-          // 페이지 번호
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 4),
-            child: _PageNumberBar(
-              currentPage: _currentPage,
-              totalPages: totalPages,
-              onPageSelected: (page) {
-                setState(() {
-                  _currentPage = page;
-                });
-              },
-            ),
-          ),
-
-          // 필터 + 검색
-          Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF5EDE2),
-              border: Border(
-                top: BorderSide(color: Color(0xFFE3D7C8), width: 1),
+          // 메인 내용
+          Column(
+            children: [
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: pagedPosts.length,
+                  itemBuilder: (context, index) {
+                    final post = pagedPosts[index];
+                    return _PostCard(
+                      post: post,
+                      onTap: () => _openPostDetail(post),
+                    );
+                  },
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  height: 40,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFB79A7B)),
-                      backgroundColor: const Color(0xFFF0E3D3),
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    onPressed: _openFilterSheet,
-                    icon: const Icon(Icons.menu, size: 18, color: Colors.black,),
-                    label: Text(
-                      _selectedFilter,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF5B4937),
-                      ),
-                    ),
+
+              // 페이지 번호
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: _PageNumberBar(
+                  currentPage: _currentPage,
+                  totalPages: totalPages,
+                  onPageSelected: (page) {
+                    setState(() {
+                      _currentPage = page;
+                    });
+                  },
+                ),
+              ),
+
+              // 필터 + 검색
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5EDE2),
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFE3D7C8), width: 1),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SizedBox(
-                    height: 40,
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: '검색하기',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFFB6A795),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFDF7F0),
-                        contentPadding:
-                        const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(20),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFD0C1AE),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      height: 40,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFB79A7B)),
+                          backgroundColor: const Color(0xFFF0E3D3),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.search,
-                              color: Color(0xFF8F7A64)),
-                          onPressed: () {
+                        onPressed: _openFilterSheet,
+                        icon: const Icon(Icons.menu, size: 18, color: Colors.black),
+                        label: Text(
+                          _selectedFilter,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF5B4937),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: '검색하기',
+                            hintStyle: const TextStyle(
+                              color: Color(0xFFB6A795),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFFDF7F0),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 0,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD0C1AE),
+                              ),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.search, color: Color(0xFF8F7A64)),
+                              onPressed: () {
+                                setState(() {
+                                  _currentPage = 1;
+                                });
+                              },
+                            ),
+                          ),
+                          onSubmitted: (_) {
                             setState(() {
                               _currentPage = 1;
                             });
                           },
                         ),
                       ),
-                      onSubmitted: (_) {
-                        setState(() {
-                          _currentPage = 1;
-                        });
-                      },
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+
+          // 오른쪽 아래 플로팅 버튼 (글쓰기)
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton(
+              backgroundColor: const Color(0xFF8F7A64),
+              onPressed: () async {
+                final newPost = await Navigator.push<PostItem>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WritePostPage(),
+                  ),
+                );
+
+                if (newPost != null) {
+                  setState(() {
+                    _allPosts.insert(0, newPost);
+                    _currentPage = 1;
+                  });
+                }
+              },
+              child: const Icon(Icons.edit, color: Colors.white),
             ),
           ),
         ],
-      ),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF8F7A64),
-        onPressed: () async {
-          // 글쓰기 페이지로 이동하고, 업로드 성공 시 새 글 받아오기
-          final newPost = await Navigator.push<PostItem>(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const WritePostPage(),
-            ),
-          );
-
-          if (newPost != null) {
-            setState(() {
-              _allPosts.insert(0, newPost);
-              _currentPage = 1;
-            });
-          }
-        },
-        child: const Icon(Icons.edit, color: Colors.white),
-      ),
-
-
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: 1, // 게시판 탭
-        onItemSelected: (index) {
-          if (index == 1) return; // 이미 게시판
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/');
-          }
-        },
       ),
     );
   }
@@ -258,7 +233,6 @@ class _BoardPageState extends State<BoardPage> {
     );
   }
 
-
   void _openFilterSheet() {
     showModalBottomSheet(
       context: context,
@@ -270,8 +244,7 @@ class _BoardPageState extends State<BoardPage> {
         final filters = ['전체', '좋아요 많은 순', '댓글 많은 순', '최신순'];
 
         return Padding(
-          padding:
-          const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -352,7 +325,6 @@ class _BoardPageState extends State<BoardPage> {
   }
 }
 
-
 class _PostCard extends StatelessWidget {
   final PostItem post;
   final VoidCallback onTap;
@@ -371,8 +343,7 @@ class _PostCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         onTap: onTap,
         child: Container(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFFDF7F0),
             borderRadius: BorderRadius.circular(24),
@@ -442,8 +413,7 @@ class _PageNumberBar extends StatelessWidget {
           onTap: () => onPageSelected(page),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 6),
-            padding:
-            const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
             child: Text(
               '$page',
               style: TextStyle(
@@ -464,3 +434,4 @@ class _PageNumberBar extends StatelessWidget {
     );
   }
 }
+
