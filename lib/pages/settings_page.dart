@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'inquiry_page.dart';
 
-
-
-class SettingsPage extends StatelessWidget
-{
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context)
-  {
-    // 여기서는 CommonFrame을 안 쓰고, 독립 화면으로 구성
-    // (이미 AppBar에 설정 버튼으로 들어왔고, AppBar는 CommonFrame 쪽에서 있음)
-    // 만약 완전 별도의 화면(AppBar 포함)으로 만들고 싶으면 Scaffold+AppBar 써도 됨.
+  Widget build(BuildContext context) {
+    const Color backgroundColor = Color(0xFFF0E8DD);
 
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('설정'),
         centerTitle: true,
@@ -21,30 +18,37 @@ class SettingsPage extends StatelessWidget
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        backgroundColor: backgroundColor,
+        elevation: 0,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: SizedBox(
-            width: 402,
-            height: 874,
-            child: _SettingsContent(),
-          ),
+      // (Center 위젯은 삭제된 상태 유지)
+      body: SingleChildScrollView(
+        child: SizedBox(
+          width: 402,
+          height: 874,
+          child: _SettingsContent(),
         ),
       ),
     );
   }
 }
 
-class _SettingsContent extends StatelessWidget
-{
+class _SettingsContent extends StatefulWidget {
   @override
-  Widget build(BuildContext context)
-  {
+  State<_SettingsContent> createState() => _SettingsContentState();
+}
+
+class _SettingsContentState extends State<_SettingsContent> {
+  bool _notificationsEnabled = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       height: 897,
       child: Stack(
         children: [
           Positioned(
+            // ... (배경 부분, 원본과 동일) ...
             left: 0,
             top: 0,
             child: Container(
@@ -67,28 +71,9 @@ class _SettingsContent extends StatelessWidget
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // 상단 설정 텍스트 영역 (피그마 상단바 일부)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.only(
-                              top: 16,
-                              left: 16,
-                              right: 16,
-                              bottom: 8,
-                            ),
-                            child: const Text(
-                              '설정',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          // 나머지 공간
-                          Container(
-                            width: double.infinity,
-                            height: 728,
+                            height: 728 + 53, // (공간 채우기)
                           ),
                         ],
                       ),
@@ -103,7 +88,8 @@ class _SettingsContent extends StatelessWidget
             child: Container(
               width: 402,
               height: 874,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 89),
+              // 👇 1. [수정] vertical: 89 -> 30 으로 상단 여백을 대폭 줄임
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -119,7 +105,7 @@ class _SettingsContent extends StatelessWidget
                       shape: RoundedRectangleBorder(
                         side: BorderSide(
                           width: 1,
-                          color: Colors.black.withValues(alpha: 0.20),
+                          color: Colors.black.withOpacity(0.20),
                         ),
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -138,44 +124,21 @@ class _SettingsContent extends StatelessWidget
                             ),
                           ),
                         ),
-                        Positioned(
-                          right: 16,
-                          top: 9,
-                          child: Container(
-                            width: 56,
-                            height: 32,
-                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-                            clipBehavior: Clip.antiAlias,
-                            decoration: ShapeDecoration(
-                              color: const Color(0x7FD0D0D0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(100),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: Transform.scale(
+                              scale: 0.9,
+                              child: CupertinoSwitch(
+                                value: _notificationsEnabled,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _notificationsEnabled = value;
+                                  });
+                                },
+                                activeColor: Colors.amber, // (노란색)
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: ShapeDecoration(
-                                    color: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(100),
-                                    ),
-                                    shadows: const [
-                                      BoxShadow(
-                                        color: Color(0x38000000),
-                                        blurRadius: 1,
-                                        offset: Offset(0, 1),
-                                        spreadRadius: 1,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ),
@@ -185,15 +148,25 @@ class _SettingsContent extends StatelessWidget
                   const SizedBox(height: 33),
 
                   // 서비스 문의 버튼
-                  _SettingsButton(label: '서비스 문의'),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InquiryPage(),
+                        ),
+                      );
+                    },
+                    child: const _SettingsButton(label: '서비스 문의'),
+                  ),
                   const SizedBox(height: 33),
 
                   // 로그아웃 버튼
-                  _SettingsButton(label: '로그아웃'),
+                  const _SettingsButton(label: '로그아웃'),
                   const SizedBox(height: 33),
 
                   // 회원 탈퇴 버튼
-                  _SettingsButton(label: '회원 탈퇴'),
+                  const _SettingsButton(label: '회원 탈퇴'),
                 ],
               ),
             ),
@@ -204,28 +177,26 @@ class _SettingsContent extends StatelessWidget
   }
 }
 
-class _SettingsButton extends StatelessWidget
-{
+class _SettingsButton extends StatelessWidget {
   final String label;
 
   const _SettingsButton({super.key, required this.label});
 
   @override
-  Widget build(BuildContext context)
-  {
+  Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 84, maxWidth: 480),
       child: Container(
         width: 175,
         height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 57, vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12), // (글자 잘림 수정됨)
         clipBehavior: Clip.antiAlias,
         decoration: ShapeDecoration(
           color: const Color(0xFFF2EDE8),
           shape: RoundedRectangleBorder(
             side: BorderSide(
               width: 1,
-              color: Colors.black.withValues(alpha: 0.20),
+              color: Colors.black.withOpacity(0.20),
             ),
             borderRadius: BorderRadius.circular(24),
           ),

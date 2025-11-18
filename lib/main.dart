@@ -4,8 +4,9 @@ import 'common_frame.dart';
 import 'test1/home_page.dart';
 import 'test1/board/board_page.dart';
 import 'pages/guide_page.dart';
-import 'pages/content_page.dart';
+// import 'pages/content_page.dart'; // 👈 1. 이 줄은 주석 처리 하거나 삭제
 import 'pages/my_page.dart';
+import 'pages/mbti_page.dart';      // 👈 2. 이 줄을 추가
 import 'start_page.dart';
 
 void main()
@@ -82,7 +83,7 @@ class _RootScreenState extends State<RootScreen>
       case 2:
         return const GuidePage();
       case 3:
-        return const ContentPage();
+        return const MbtiPage(); // 👈 3. 'ContentPage()' 대신 'MbtiPage()'로 변경
       case 4:
         return const MyPage();
       default:
@@ -90,5 +91,3 @@ class _RootScreenState extends State<RootScreen>
     }
   }
 }
-
-
