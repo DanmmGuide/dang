@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'breed_item.dart';
 import 'breed_detail_page.dart';
+import '../../models/dog_breed.dart';
 
 class BreedSelectPage extends StatefulWidget {
   const BreedSelectPage({super.key});
@@ -13,40 +14,61 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
   final TextEditingController _searchController = TextEditingController();
 
   // 전체 품종 리스트 (샘플)
+  // TODO: 나중에 TheDogAPI + DB에서 불러오도록 교체
   final List<BreedItem> _allBreeds = const [
     BreedItem(
-      name: '포메라니안',
-      imagePath: 'assets/images/pome.png',
-      size: '소형',
+      breed: DogBreed(
+        id: 1,
+        name: 'Pomeranian',
+        weightMetric: '2 - 3',
+        lifeSpan: '12 - 16 years',
+        temperament: 'Playful, Friendly',
+        // TheDogAPI 실제 이미지 URL을 나중에 채워넣으면 됨
+        imageUrl: null,
+      ),
       isBeginnerFriendly: true,
       isApartmentFriendly: true,
       activityLevel: '보통',
     ),
     BreedItem(
-      name: '토이 푸들',
-      imagePath: 'assets/images/toy_poodle.png',
-      size: '소형',
+      breed: DogBreed(
+        id: 2,
+        name: 'Toy Poodle',
+        weightMetric: '3 - 4',
+        lifeSpan: '12 - 15 years',
+        temperament: 'Intelligent, Active',
+        imageUrl: null,
+      ),
       isBeginnerFriendly: true,
       isApartmentFriendly: true,
       activityLevel: '높음',
     ),
     BreedItem(
-      name: '시츄',
-      imagePath: 'assets/images/shih_tzu.png',
-      size: '소형',
+      breed: DogBreed(
+        id: 3,
+        name: 'Shih Tzu',
+        weightMetric: '4 - 7',
+        lifeSpan: '10 - 16 years',
+        temperament: 'Affectionate, Playful',
+        imageUrl: null,
+      ),
       isBeginnerFriendly: true,
       isApartmentFriendly: true,
       activityLevel: '낮음',
     ),
     BreedItem(
-      name: '비숑 프리제',
-      imagePath: 'assets/images/bichon.png',
-      size: '소형',
+      breed: DogBreed(
+        id: 4,
+        name: 'Bichon Frise',
+        weightMetric: '5 - 8',
+        lifeSpan: '12 - 15 years',
+        temperament: 'Cheerful, Playful',
+        imageUrl: null,
+      ),
       isBeginnerFriendly: false,
       isApartmentFriendly: true,
       activityLevel: '높음',
     ),
-    // 필요하면 더 추가
   ];
 
   String _selectedFilter = '전체';
@@ -55,7 +77,9 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
   List<BreedItem> get _filteredBreeds {
     // 1) 검색으로 1차 필터
     List<BreedItem> list = _allBreeds.where((b) {
-      return b.name.contains(_searchText);
+      if (_searchText.isEmpty) return true;
+      // 영문/한글 상관없이 검색할 수 있게 소문자 비교
+      return b.name.toLowerCase().contains(_searchText.toLowerCase());
     }).toList();
 
     // 2) 필터 선택값으로 2차 필터
@@ -130,7 +154,12 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
   }
 
   void _onTapBreed(BreedItem breed) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => BreedDetailPage(breed: breed)));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BreedDetailPage(breed: breed),
+      ),
+    );
   }
 
   @override
@@ -224,9 +253,20 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(16),
                               ),
-                              child: Image.asset(
-                                breed.imagePath,
+                              child: breed.imageUrl != null
+                                  ? Image.network(
+                                breed.imageUrl!,
                                 fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) {
+                                  return Container(
+                                    color: Colors.brown.withOpacity(0.2),
+                                    child: const Icon(Icons.pets),
+                                  );
+                                },
+                              )
+                                  : Container(
+                                color: Colors.brown.withOpacity(0.2),
+                                child: const Icon(Icons.pets),
                               ),
                             ),
                           ),
