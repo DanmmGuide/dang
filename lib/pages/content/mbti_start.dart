@@ -12,11 +12,10 @@ class MBTIStartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 공통 컬러
-    const Color accentColor = Color(0xFFED6D11);   // 버튼 강조색
+    const Color accentColor = Color(0xFFED6D11);
     const Color backgroundColor = Color(0xFFF0E8DD);
-    const Color buttonColor = Colors.white;        // 라벨 배경
-    const Color borderColor = Color(0xFFE0E0E0);   // 라벨 테두리
+    const Color buttonColor = Colors.white;
+    const Color borderColor = Color(0xFFE0E0E0);
 
     return Container(
       color: backgroundColor,
@@ -25,9 +24,9 @@ class MBTIStartPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Column(
           children: <Widget>[
-            const SizedBox(height: 60),   // 상단 여백
+            const SizedBox(height: 60),
 
-            // ------ 라벨 (강아지 MBTI 검사) ------
+            // 상단 라벨
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
@@ -37,22 +36,17 @@ class MBTIStartPage extends StatelessWidget {
               ),
               child: const Text(
                 '강아지 MBTI 검사',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-
             const SizedBox(height: 40),
 
-            // ------ 이미지 (너 버전 크기 & 파일명 반영) ------
+            // 이미지
             SizedBox(
-              height: 220,
-              width: 220,
+              height: 300,
+              width: 300,
               child: Image.asset(
-                'assets/pomeranian.png',
-                fit: BoxFit.cover,
+                'assets/start.jpg', // 너가 쓰는 이미지로 유지
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: Colors.grey[200],
@@ -62,9 +56,9 @@ class MBTIStartPage extends StatelessWidget {
               ),
             ),
 
-            const Spacer(),  // 버튼을 아래로 밀어내기
+            const Spacer(),
 
-            // ------ START 버튼 ------
+            // START 버튼
             ElevatedButton(
               onPressed: onStartPressed,
               style: ElevatedButton.styleFrom(
@@ -81,7 +75,7 @@ class MBTIStartPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 70),  // 하단 안정적 여백
+            const SizedBox(height: 100),
           ],
         ),
       ),

@@ -1,92 +1,71 @@
-// lib/pages/mbti_page.dart
+// lib/pages/content/mbti_page.dart
 
 import 'package:flutter/material.dart';
-import 'MBTI_start.dart';   // 1. 시작 화면
-import 'MBTI_test.dart';    // 2. 테스트 화면
-import 'MBTI_result.dart'; // 3. 결과 화면
+import 'mbti_start.dart';
+import 'mbti_test.dart';
+import 'mbti_result.dart';
 
-// 1️⃣ '콘텐츠' 탭의 본체 (CommonFrame 안에 들어감)
-//    - 평소엔 '시작 화면'만 보여줌
-//    - 'START' 버튼을 누르면 Navigator.push로 2️⃣번을 띄움
-class MbtiPage extends StatelessWidget {
+class MbtiPage extends StatefulWidget {
   const MbtiPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 'START' 버튼을 눌렀을 때 실행될 함수
-    void _startTest() {
-      // Navigator.push로 새 화면(MBTITestFlow)을 띄움
-      // 이 화면은 CommonFrame을 벗어난 '상세 페이지'임
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const MBTITestFlow(),
-        ),
-      );
-    }
-
-    // ⚠️ 중요: 여기서는 Scaffold/AppBar 없음 (CommonFrame 사용)
-    // '시작' 페이지만 보여줌
-    return MBTIStartPage(
-      onStartPressed: _startTest, // 👈 'START' 누르면 _startTest 함수 실행
-    );
-  }
+  State<MbtiPage> createState() => _MbtiPageState();
 }
 
+class _MbtiPageState extends State<MbtiPage> {
+  // start / test / result
+  String _currentStep = 'start';
+  List<String> _answers = [];
 
-// 2️⃣ MBTI 테스트 흐름(Test <-> Result)을 관리하는
-//    별도의 '풀스크린 상세 페이지' (CommonFrame 밖에 있음)
-//    (board_detail_page.dart와 같은 원리)
-class MBTITestFlow extends StatefulWidget {
-  const MBTITestFlow({super.key});
-
-  @override
-  State<MBTITestFlow> createState() => _MBTITestFlowState();
-}
-
-class _MBTITestFlowState extends State<MBTITestFlow> {
-  // 현재 상태가 'test'인지 'result'인지 기억
-  String _currentStep = 'test';
-
-  // 테스트 화면 -> '결과' 화면으로
-  void _finishTest() {
+  void _goToStart() {
     setState(() {
-      _currentStep = 'result';
+      _currentStep = 'start';
+      _answers = [];      // 다시 할 때는 답변도 리셋
     });
   }
 
-  // 결과 화면 -> '테스트' 화면으로 (뒤로가기)
-  void _backToTest() {
+  void _goToTest() {
     setState(() {
       _currentStep = 'test';
     });
   }
 
-  // 결과 화면 -> '시작' 화면으로 (다시하기)
-  void _restart() {
-    // 'MBTITestFlow' 페이지 자체를 닫고
-    // 뒤에 있던 1️⃣번(MbtiPage)으로 돌아감
-    Navigator.of(context).pop();
-  }
-
-  // 테스트 화면 -> '시작' 화면으로 (뒤로가기)
-  void _backToStart() {
-    Navigator.of(context).pop();
+  void _goToResult() {
+    setState(() {
+      _currentStep = 'result';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_currentStep == 'result') {
-      // 3. '결과' 상태면, 결과 페이지 빌드
-      return MBTIResultPage(
-        onRestartPressed: _restart,    // '다시하기' 누르면 1️⃣번(MbtiPage)으로
-        onBackPressed: _backToTest,   // '뒤로가기' 누르면 2️⃣번(Test)으로
-      );
-    } else {
-      // 2. '테스트' 상태면, 테스트 페이지 빌드
-      return MBTITestPage(
-        onTestFinished: _finishTest,  // '답변' 누르면 3️⃣번(Result)으로
-        onBackPressed: _backToStart, // '뒤로가기' 누르면 1️⃣번(MbtiPage)으로
-      );
+    switch (_currentStep) {
+      case 'test':
+      // ❗ mbti_test.dart 에서 생성자 이렇게 되어 있어야 함:
+      // MBTITestPage({
+      //   required this.onTestFinished,
+      //   required this.onBackPressed,
+      // });
+        return MBTITestPage(
+          onTestFinished: _goToResult, // 마지막 문제까지 풀면 결과 화면으로
+          onBackPressed: _goToStart,   // 1번 문제에서 뒤로가기 → start 화면
+        );
+
+      case 'result':
+      // ❗ mbti_result.dart 에서 생성자:
+      // MBTIResultPage({
+      //   required this.onRestartPressed,
+      //   required this.onBackPressed,
+      // });
+        return MBTIResultPage(
+          onRestartPressed: _goToStart, // "다시하기" → start 화면
+          onBackPressed: _goToTest,     // 결과 화면에서 뒤로가기 → test 화면
+        );
+
+      case 'start':
+      default:
+        return MBTIStartPage(
+          onStartPressed: _goToTest,    // START 버튼 → test 화면
+        );
     }
   }
 }

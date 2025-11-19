@@ -24,8 +24,8 @@ class QuizQuestion {
 }
 
 class MBTITestPage extends StatefulWidget {
-  final VoidCallback onTestFinished;
-  final VoidCallback onBackPressed;
+  final VoidCallback onTestFinished; // 마지막 문제까지 풀었을 때
+  final VoidCallback onBackPressed;  // 1번 문제에서 ← 눌렀을 때
 
   const MBTITestPage({
     super.key,
@@ -232,21 +232,22 @@ class _MBTITestPageState extends State<MBTITestPage> {
     ),
   ];
 
-  // 3. 답변 선택 시 로직 (다음 질문으로 이동)
+  // 답변 선택
   void _handleAnswer(String selectedValue) {
+    if (_currentQuestionIndex >= _questions.length) return;
+
     setState(() {
       _userAnswers.add(selectedValue);
 
       if (_currentQuestionIndex < _questions.length - 1) {
         _currentQuestionIndex++;
       } else {
-        // TODO: 나중에 여기서 _userAnswers로 MBTI 계산 가능
-        widget.onTestFinished(); // MBTITestFlow에서 Result 화면으로 전환
+        widget.onTestFinished(); // MbtiPage가 result로 전환
       }
     });
   }
 
-  // 4. 뒤로 가기 로직 (이전 질문 or 시작 화면)
+  // 뒤로가기 (이전 질문 or START)
   void _handleBack() {
     if (_currentQuestionIndex > 0) {
       setState(() {
@@ -256,109 +257,106 @@ class _MBTITestPageState extends State<MBTITestPage> {
         }
       });
     } else {
-      // 첫 번째 문제에서 뒤로 가면 시작 화면으로
-      widget.onBackPressed();
+      widget.onBackPressed(); // 첫 문제에서 ← → START
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentQuestion = _questions[_currentQuestionIndex];
+    const Color backgroundColor = Color(0xFFF0E8DD);
     const Color buttonColor = Colors.white;
     const Color borderColor = Color(0xFFE0E0E0);
-    const Color backgroundColor = Color(0xFFF0E8DD);
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        title: const Text(
-          'MBTI 검사',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _handleBack,
-        ),
-      ),
-      body: Container(
+    if (_questions.isEmpty) {
+      return Container(
         color: backgroundColor,
-        width: double.infinity,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 상단 라벨
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: buttonColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: borderColor),
-                ),
-                child: const Text('강아지 MBTI 검사'),
-              ),
-              const SizedBox(height: 20),
+        alignment: Alignment.center,
+        child: const Text('질문 데이터가 없습니다.'),
+      );
+    }
 
-              // 진행 상황
-              Text(
-                '${_currentQuestionIndex + 1} / ${_questions.length}',
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 15),
+    final currentQuestion = _questions[_currentQuestionIndex];
 
-              // 질문 텍스트
-              Text(
-                currentQuestion.question,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+    return Container(
+      color: backgroundColor,
+      width: double.infinity,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 상단 뒤로가기
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _handleBack,
               ),
-              const SizedBox(height: 30),
+            ),
+            const SizedBox(height: 4),
 
-              // 답변 1
-              _buildAnswerOption(
-                context: context,
-                imagePath: currentQuestion.answer1Image,
-                text: currentQuestion.answer1Text,
-                onTap: () => _handleAnswer(currentQuestion.answer1Value),
+            // 상단 라벨
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: buttonColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
               ),
-              const SizedBox(height: 20),
+              child: const Text('강아지 MBTI 검사'),
+            ),
+            const SizedBox(height: 20),
 
-              const Text(
-                'VS',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
+            // 진행 상황
+            Text(
+              '${_currentQuestionIndex + 1} / ${_questions.length}',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 15),
 
-              // 답변 2
-              _buildAnswerOption(
-                context: context,
-                imagePath: currentQuestion.answer2Image,
-                text: currentQuestion.answer2Text,
-                onTap: () => _handleAnswer(currentQuestion.answer2Value),
+            // 질문
+            Text(
+              currentQuestion.question,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 30),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+
+            // 답변 1
+            _buildAnswerOption(
+              imagePath: currentQuestion.answer1Image,
+              text: currentQuestion.answer1Text,
+              onTap: () => _handleAnswer(currentQuestion.answer1Value),
+            ),
+            const SizedBox(height: 20),
+
+            const Text(
+              'VS',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 답변 2
+            _buildAnswerOption(
+              imagePath: currentQuestion.answer2Image,
+              text: currentQuestion.answer2Text,
+              onTap: () => _handleAnswer(currentQuestion.answer2Value),
+            ),
+            const SizedBox(height: 30),
+          ],
         ),
       ),
     );
   }
 
-  // 5. 답변 카드 + 버튼 UI
   Widget _buildAnswerOption({
-    required BuildContext context,
     required String imagePath,
     required String text,
     required VoidCallback onTap,
@@ -368,14 +366,13 @@ class _MBTITestPageState extends State<MBTITestPage> {
 
     return Column(
       children: [
-        // 이미지
         ClipRRect(
           borderRadius: BorderRadius.circular(15.0),
           child: Image.asset(
             imagePath,
             width: double.infinity,
             height: 200,
-            fit: BoxFit.contain, // 이미지 깨짐 방지
+            fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
               return Container(
                 width: double.infinity,
@@ -390,8 +387,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
           ),
         ),
         const SizedBox(height: 15),
-
-        // 텍스트 버튼
         Material(
           color: buttonColor,
           shape: RoundedRectangleBorder(
