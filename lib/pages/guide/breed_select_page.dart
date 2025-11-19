@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'breed_item.dart';
-import 'package:dang_guide/common_frame.dart';
 import 'breed_detail_page.dart';
 
 class BreedSelectPage extends StatefulWidget {
