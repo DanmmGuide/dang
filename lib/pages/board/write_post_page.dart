@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app_bottom_nav.dart';
 import 'board_page.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -287,21 +286,6 @@ class _WritePostPageState extends State<WritePostPage> {
             ),
           ],
         ),
-      ),
-
-      // 글쓰기 화면에도 하단 네비 그대로 보여주기 (선택은 게시판)
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: 1,
-        onItemSelected: (index) {
-          if (index == 1) return; // 이미 게시판 계열 화면
-          if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/',
-                  (route) => false,
-            );
-          }
-        },
       ),
     );
   }

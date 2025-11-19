@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:example0527/common_frame.dart';
+import 'package:dang_guide/common_frame.dart';
 
 class GuidePage extends StatelessWidget
 {

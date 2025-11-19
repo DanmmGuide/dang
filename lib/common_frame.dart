@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'pages/settings_page.dart';
+import 'pages/settings/settings_page.dart';
 
 class CommonFrame extends StatelessWidget {
-  final Widget body;                // 가운데 내용
-  final int currentIndex;           // 현재 선택된 탭 인덱스
-  final ValueChanged<int> onTapNav; // 탭 눌렀을 때 콜백
+  final Widget body;
+  final int currentIndex;
+  final ValueChanged<int> onTapNav;
+  final bool showBackButton;        // ← 새로 추가됨!
 
   const CommonFrame({
     super.key,
     required this.body,
     required this.currentIndex,
     required this.onTapNav,
+    this.showBackButton = false,     // 기본값: 뒤로가기 없음
   });
 
   @override
@@ -23,6 +25,15 @@ class CommonFrame extends StatelessWidget {
         elevation: 1,
         centerTitle: true,
         automaticallyImplyLeading: false,
+
+        // 🔻 showBackButton 이 true이면 뒤로가기 버튼 표시
+        leading: showBackButton
+            ? IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        )
+            : null,
+
         title: Text(
           title,
           style: const TextStyle(
@@ -31,6 +42,7 @@ class CommonFrame extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black),
@@ -48,56 +60,39 @@ class CommonFrame extends StatelessWidget {
 
       body: body,
 
-      // 🔻 AppBottomNav를 여기 안으로 합친 부분
-      bottomNavigationBar: Container(
-        height: 75,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Color(0xFFF4F2EF), width: 1),
-          ),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // 🔻 BottomNav 분리
+  Widget _buildBottomNav() {
+    return Container(
+      height: 75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFF4F2EF), width: 1),
         ),
-        padding: const EdgeInsets.only(
-          top: 8,
-          left: 16,
-          right: 16,
-          bottom: 12,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildNavItem(
-              index: 0,
-              label: '홈',
-              icon: Icons.home,
-            ),
-            _buildNavItem(
-              index: 1,
-              label: '게시판',
-              icon: Icons.list,
-            ),
-            _buildNavItem(
-              index: 2,
-              label: '가이드',
-              icon: Icons.book_outlined,
-            ),
-            _buildNavItem(
-              index: 3,
-              label: '콘텐츠',
-              icon: Icons.collections_outlined,
-            ),
-            _buildNavItem(
-              index: 4,
-              label: '마이페이지',
-              icon: Icons.person_outline,
-            ),
-          ],
-        ),
+      ),
+      padding: const EdgeInsets.only(
+        top: 8,
+        left: 16,
+        right: 16,
+        bottom: 12,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildNavItem(index: 0, label: '홈', icon: Icons.home),
+          _buildNavItem(index: 1, label: '게시판', icon: Icons.list),
+          _buildNavItem(index: 2, label: '가이드', icon: Icons.book_outlined),
+          _buildNavItem(index: 3, label: '콘텐츠', icon: Icons.collections_outlined),
+          _buildNavItem(index: 4, label: '마이페이지', icon: Icons.person_outline),
+        ],
       ),
     );
   }
 
-  // 개별 탭 아이템
   Widget _buildNavItem({
     required int index,
     required String label,
@@ -136,7 +131,6 @@ class CommonFrame extends StatelessWidget {
     );
   }
 
-  // 탭 인덱스에 따른 상단 타이틀
   String _titleForIndex(int index) {
     switch (index) {
       case 0:

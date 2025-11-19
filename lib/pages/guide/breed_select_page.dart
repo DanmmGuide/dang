@@ -1,0 +1,269 @@
+import 'package:flutter/material.dart';
+import 'breed_item.dart';
+import 'package:dang_guide/common_frame.dart';
+import 'breed_detail_page.dart';
+
+class BreedSelectPage extends StatefulWidget {
+  const BreedSelectPage({super.key});
+
+  @override
+  State<BreedSelectPage> createState() => _BreedSelectPageState();
+}
+
+class _BreedSelectPageState extends State<BreedSelectPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  // 전체 품종 리스트 (샘플)
+  final List<BreedItem> _allBreeds = const [
+    BreedItem(
+      name: '포메라니안',
+      imagePath: 'assets/images/pome.png',
+      size: '소형',
+      isBeginnerFriendly: true,
+      isApartmentFriendly: true,
+      activityLevel: '보통',
+    ),
+    BreedItem(
+      name: '토이 푸들',
+      imagePath: 'assets/images/toy_poodle.png',
+      size: '소형',
+      isBeginnerFriendly: true,
+      isApartmentFriendly: true,
+      activityLevel: '높음',
+    ),
+    BreedItem(
+      name: '시츄',
+      imagePath: 'assets/images/shih_tzu.png',
+      size: '소형',
+      isBeginnerFriendly: true,
+      isApartmentFriendly: true,
+      activityLevel: '낮음',
+    ),
+    BreedItem(
+      name: '비숑 프리제',
+      imagePath: 'assets/images/bichon.png',
+      size: '소형',
+      isBeginnerFriendly: false,
+      isApartmentFriendly: true,
+      activityLevel: '높음',
+    ),
+    // 필요하면 더 추가
+  ];
+
+  String _selectedFilter = '전체';
+  String _searchText = '';
+
+  List<BreedItem> get _filteredBreeds {
+    // 1) 검색으로 1차 필터
+    List<BreedItem> list = _allBreeds.where((b) {
+      return b.name.contains(_searchText);
+    }).toList();
+
+    // 2) 필터 선택값으로 2차 필터
+    switch (_selectedFilter) {
+      case '초보자 추천':
+        list = list.where((b) => b.isBeginnerFriendly).toList();
+        break;
+      case '아파트 적합':
+        list = list.where((b) => b.isApartmentFriendly).toList();
+        break;
+      case '활동량 낮음':
+        list = list.where((b) => b.activityLevel == '낮음').toList();
+        break;
+      case '활동량 높음':
+        list = list.where((b) => b.activityLevel == '높음').toList();
+        break;
+    // '전체'는 필터 없음
+    }
+
+    return list;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _openFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFF7EADA),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        final filters = ['전체', '초보자 추천', '아파트 적합', '활동량 낮음', '활동량 높음'];
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '필터 선택',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...filters.map((f) {
+                return RadioListTile<String>(
+                  dense: true,
+                  title: Text(f),
+                  value: f,
+                  groupValue: _selectedFilter,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _selectedFilter = value;
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _onTapBreed(BreedItem breed) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => BreedDetailPage(breed: breed)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final breeds = _filteredBreeds;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0E8DD),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFFF0E8DD),
+        centerTitle: true,
+        title: const Text(
+          '가이드',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Epilogue',
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 검색 + 필터 아이콘
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() {
+                        _searchText = val.trim();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: '품종 이름을 검색하세요',
+                      prefixIcon: const Icon(Icons.search),
+                      isDense: true,
+                      filled: true,
+                      fillColor: const Color(0xFFF7EADA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _openFilterSheet,
+                  icon: const Icon(Icons.filter_list),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // 현재 필터 표시
+            Text(
+              '필터: $_selectedFilter · 총 ${breeds.length}종',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+
+            // 종 카드 그리드
+            Expanded(
+              child: GridView.builder(
+                itemCount: breeds.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // 한 줄에 2개
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.85,
+                ),
+                itemBuilder: (context, index) {
+                  final breed = breeds[index];
+                  return GestureDetector(
+                    onTap: () => _onTapBreed(breed),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7EADA),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
+                              child: Image.asset(
+                                breed.imagePath,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  breed.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${breed.size} · 활동량 ${breed.activityLevel}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,3 +1,5 @@
+// lib/pages/home/home_page.dart
+
 import 'package:flutter/material.dart';
 
 class HomePageClean extends StatelessWidget {
@@ -5,23 +7,22 @@ class HomePageClean extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ 여기서는 Scaffold / AppBar 없이 "내용"만 구성
     return Container(
-      color: const Color(0xFFF0E8DD),  // 원래 배경색 유지
+      color: const Color(0xFFF0E8DD),  // 공통 배경색
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 상단 초콜릿 이미지 + 텍스트
+              /// ⭐ 상단 이미지 + 텍스트
               Center(
                 child: Column(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: Image.asset(
-                        'assets/chocolate.jpg', // pubspec.yaml 에 등록된 경로
+                        'assets/chocolate.jpg',
                         width: 180,
                         height: 180,
                         fit: BoxFit.cover,
@@ -56,6 +57,7 @@ class HomePageClean extends StatelessWidget {
 
               const SizedBox(height: 150),
 
+              /// ⭐ 오늘의 반려동물 팁
               const Text(
                 '오늘의 반려동물 팁',
                 style: TextStyle(
@@ -92,8 +94,7 @@ class HomePageClean extends StatelessWidget {
                           SizedBox(height: 6),
                           Text(
                             '매일 30분 이상 산책을 시켜주면\n'
-                                '반려견의 스트레스 해소와 건강에 좋아요.\n'
-                                '정우는 정우얌 > ㅅ < ',
+                                '반려견의 스트레스 해소와 건강에 좋아요.',
                             style: TextStyle(
                               fontSize: 12,
                               height: 1.4,

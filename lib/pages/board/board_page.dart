@@ -434,4 +434,3 @@ class _PageNumberBar extends StatelessWidget {
     );
   }
 }
-
