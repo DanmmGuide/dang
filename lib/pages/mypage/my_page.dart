@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // 👈 패키지 임포트
 
 class MyPage extends StatefulWidget {
-  const MyPage({super.key});
+  final ValueChanged<bool>? onEditingChanged;
+  const MyPage({super.key, this.onEditingChanged});
 
   @override
   State<MyPage> createState() => _MyPageState();
@@ -72,140 +73,198 @@ class _MyPageState extends State<MyPage> {
   void _toggleEditMode() {
     setState(() {
       if (_isEditing) {
-        // '저장'을 눌렀을 때의 로직 (여기서 서버로 데이터를 보내거나 DB 업데이트)
+        // 완료(저장) 눌렀을 때 처리
         print("저장됨: ${_petNameController.text}");
       }
-      _isEditing = !_isEditing; // 모드 전환
+      _isEditing = !_isEditing;
     });
+
+    // 상위(RootScreen)에게 현재 수정 상태 알려주기
+    widget.onEditingChanged?.call(_isEditing);
+  }
+
+  // 🔙 뒤로가기(시스템/앱바) 막기 + 경고창
+  Future<bool> _onWillPop() async {
+    if (!_isEditing) return true; // 수정 중 아니면 그냥 나가기 허용
+
+    final bool? shouldLeave = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('작성 내용이 저장되지 않았어요'),
+          content: const Text('계속 작성하시겠습니까, 아니면 작성 취소 후 나가시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // 계속 작성
+              },
+              child: const Text('계속 작성'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _isEditing = false;
+                });
+                // 상위에도 수정 종료 알리기 → 네비바 다시 표시용
+                widget.onEditingChanged?.call(false);
+                Navigator.of(context).pop(true); // 나가기 허용
+              },
+              child: const Text(
+                '작성 취소',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldLeave ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
     const Color backgroundColor = Color(0xFFF0E8DD);
-    // 수정 모드일 때 테두리 색상 강조
     final Color activeColor = const Color(0xFFED6D11);
 
-    return Container(
-      color: backgroundColor,
-      width: double.infinity,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            // 상단 수정/저장 버튼 (오른쪽 정렬)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _toggleEditMode,
-                icon: Icon(
-                  _isEditing ? Icons.check : Icons.edit,
-                  color: activeColor,
-                  size: 20,
-                ),
-                label: Text(
-                  _isEditing ? '완료' : '수정',
-                  style: TextStyle(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Container(
+        color: backgroundColor,
+        width: double.infinity,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              // 상단 수정/완료 버튼
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _toggleEditMode,
+                  icon: Icon(
+                    _isEditing ? Icons.check : Icons.edit,
                     color: activeColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    size: 20,
+                  ),
+                  label: Text(
+                    _isEditing ? '완료' : '수정',
+                    style: TextStyle(
+                      color: activeColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // 💡 사진 영역
-            GestureDetector(
-              onTap: _pickImage, // 수정 모드일 때만 작동하도록 함수 내부에서 처리함
-              child: Stack(
-                children: [
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.1), blurRadius: 10)
-                      ],
-                      color: Colors.white,
-                      image: _getImageProvider(), // 이미지 표시 함수 분리
-                    ),
-                    // 이미지가 없을 때 기본 아이콘
-                    child: (_pickedImage == null)
-                        ? const Icon(Icons.pets, size: 50, color: Colors.grey)
-                        : null,
-                  ),
-
-                  // 수정 모드일 때만 보이는 카메라 아이콘 오버레이
-                  if (_isEditing)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: activeColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.camera_alt,
-                            size: 20, color: Colors.white),
+              // 💡 사진 영역
+              GestureDetector(
+                onTap: _pickImage,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                        color: Colors.white,
+                        image: _getImageProvider(),
                       ),
+                      child: (_pickedImage == null)
+                          ? const Icon(Icons.pets,
+                          size: 50, color: Colors.grey)
+                          : null,
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
 
-            // 이름 (수정 가능하도록 변경)
-            _isEditing
-                ? SizedBox(
-              width: 150,
-              child: TextField(
-                controller: _petNameController,
-                textAlign: TextAlign.center,
+                    // 수정 모드일 때만 카메라 아이콘
+                    if (_isEditing)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: activeColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt,
+                              size: 20, color: Colors.white),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // 이름
+              _isEditing
+                  ? SizedBox(
+                width: 150,
+                child: TextField(
+                  controller: _petNameController,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              )
+                  : Text(
+                '<${_petNameController.text}>',
                 style: const TextStyle(
                     fontSize: 18, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+              ),
+              const SizedBox(height: 20),
+
+              // [사용자 정보]
+              _buildInfoGroup(title: '[사용자 정보]', children: [
+                _buildInfoBox('보호자 이름', _guardianController),
+              ]),
+              const SizedBox(height: 20),
+
+              // [반려동물 정보]
+              _buildInfoGroup(title: '[반려동물 정보]', children: [
+                _buildInfoBox('반려동물 이름', _petNameController),
+                _buildInfoBox('종', _speciesController),
+                _buildInfoBox('생년월일', _birthController),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoBox('성별', _genderController, isHalf: true),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildInfoBox('중성화', _neuteredController,
+                          isHalf: true),
+                    ),
+                  ],
                 ),
-              ),
-            )
-                : Text('<${_petNameController.text}>',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-
-            // 정보 섹션
-            _buildInfoGroup(title: '[사용자 정보]', children: [
-              _buildInfoBox('보호자 이름', _guardianController),
-            ]),
-            const SizedBox(height: 20),
-
-            _buildInfoGroup(title: '[반려동물 정보]', children: [
-              _buildInfoBox('반려동물 이름', _petNameController),
-              _buildInfoBox('종', _speciesController),
-              _buildInfoBox('생년월일', _birthController),
-              Row(
-                children: [
-                  Expanded(child: _buildInfoBox('성별', _genderController, isHalf: true)),
-                  const SizedBox(width: 10),
-                  Expanded(child: _buildInfoBox('중성화', _neuteredController, isHalf: true)),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(child: _buildInfoBox('몸무게', _weightController, isHalf: true)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    // 빈 칸도 형태 유지를 위해 컨테이너로 둠
-                      child: Container(height: 55)),
-                ],
-              ),
-            ]),
-            const SizedBox(height: 50),
-          ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoBox('몸무게', _weightController, isHalf: true),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: SizedBox(height: 55),
+                    ),
+                  ],
+                ),
+              ]),
+              const SizedBox(height: 50),
+            ],
+          ),
         ),
       ),
     );

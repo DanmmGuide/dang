@@ -48,33 +48,31 @@ class RootScreen extends StatefulWidget
   }
 }
 
-class _RootScreenState extends State<RootScreen>
-{
+class _RootScreenState extends State<RootScreen> {
   int _currentIndex = 0;
+  bool _isMyPageEditing = false;
 
-  void _onTapNav(int index)
-  {
+  void _onTapNav(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
   @override
-  Widget build(BuildContext context)
-  {
+  Widget build(BuildContext context) {
     final Widget body = _buildBodyForIndex(_currentIndex);
 
     return CommonFrame(
       currentIndex: _currentIndex,
       onTapNav: _onTapNav,
       body: body,
+      hideBottomNav: _currentIndex == 4 && _isMyPageEditing,
+      showBackButton: _currentIndex == 4 && _isMyPageEditing,
     );
   }
 
-  Widget _buildBodyForIndex(int index)
-  {
-    switch (index)
-    {
+  Widget _buildBodyForIndex(int index) {
+    switch (index) {
       case 0:
         return const HomePageClean();
       case 1:
@@ -84,7 +82,13 @@ class _RootScreenState extends State<RootScreen>
       case 3:
         return const MbtiPage();
       case 4:
-        return const MyPage();
+        return MyPage(
+          onEditingChanged: (isEditing) {
+            setState(() {
+              _isMyPageEditing = isEditing; // 👈 수정 모드 반영
+            });
+          },
+        );
       default:
         return const HomePageClean();
     }

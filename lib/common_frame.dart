@@ -6,13 +6,15 @@ class CommonFrame extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTapNav;
   final bool showBackButton;        // ← 새로 추가됨!
+  final bool hideBottomNav;
 
   const CommonFrame({
     super.key,
     required this.body,
     required this.currentIndex,
     required this.onTapNav,
-    this.showBackButton = false,     // 기본값: 뒤로가기 없음
+    this.showBackButton = false,// 기본값: 뒤로가기 없음
+    this.hideBottomNav = false,
   });
 
   @override
@@ -30,7 +32,7 @@ class CommonFrame extends StatelessWidget {
         leading: showBackButton
             ? IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
         )
             : null,
 
@@ -60,7 +62,7 @@ class CommonFrame extends StatelessWidget {
 
       body: body,
 
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: hideBottomNav ? null : _buildBottomNav(),
     );
   }
 
