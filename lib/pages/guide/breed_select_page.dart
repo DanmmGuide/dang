@@ -19,11 +19,11 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
     BreedItem(
       breed: DogBreed(
         id: 1,
-        name: 'Pomeranian',
+        name: '포메라니안',
         weightMetric: '2 - 3',
         lifeSpan: '12 - 16 years',
         temperament: 'Playful, Friendly',
-        // TheDogAPI 실제 이미지 URL을 나중에 채워넣으면 됨
+        // TheDogAPI 실제 이미지 URL을 나중에 채워넣으 됨
         imageUrl: null,
       ),
       isBeginnerFriendly: true,
@@ -33,7 +33,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
     BreedItem(
       breed: DogBreed(
         id: 2,
-        name: 'Toy Poodle',
+        name: '토이 푸들',
         weightMetric: '3 - 4',
         lifeSpan: '12 - 15 years',
         temperament: 'Intelligent, Active',
@@ -46,7 +46,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
     BreedItem(
       breed: DogBreed(
         id: 3,
-        name: 'Shih Tzu',
+        name: '시츄',
         weightMetric: '4 - 7',
         lifeSpan: '10 - 16 years',
         temperament: 'Affectionate, Playful',
@@ -59,7 +59,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
     BreedItem(
       breed: DogBreed(
         id: 4,
-        name: 'Bichon Frise',
+        name: '비숑',
         weightMetric: '5 - 8',
         lifeSpan: '12 - 15 years',
         temperament: 'Cheerful, Playful',
@@ -168,20 +168,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0E8DD),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFFF0E8DD),
-        centerTitle: true,
-        title: const Text(
-          '가이드',
-          style: TextStyle(
-            fontSize: 16,
-            fontFamily: 'Epilogue',
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-      ),
+
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
@@ -214,7 +201,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: _openFilterSheet,
-                  icon: const Icon(Icons.filter_list),
+                  icon: const Icon(Icons.menu),
                 ),
               ],
             ),
