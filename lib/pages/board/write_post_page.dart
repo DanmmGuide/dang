@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'board_page.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,10 +14,22 @@ class WritePostPage extends StatefulWidget {
 class _WritePostPageState extends State<WritePostPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  File? _selectedImageFile;
+
+  final ImagePicker _picker = ImagePicker();
+
+  // ✅ 여러 장 이미지 (최대 10장)
+  List<XFile> _images = [];
+
+  // SharedPreferences 키
   static const String _draftTitleKey = 'draft_title';
   static const String _draftContentKey = 'draft_content';
-  static const String _draftImagePathKey = 'draft_image_path';
+  static const String _draftImagePathsKey = 'draft_image_paths';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDraft();
+  }
 
   @override
   void dispose() {
@@ -26,55 +37,61 @@ class _WritePostPageState extends State<WritePostPage> {
     _contentController.dispose();
     super.dispose();
   }
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile =
-    await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImageFile = File(pickedFile.path);
-      });
-    }
-  }
-  @override
-  void initState() {
-    super.initState();
-    _loadDraft();
-  }
-
+  /// 🔹 임시저장 불러오기 (불러온 뒤 바로 삭제 = 한 번만 복원)
   Future<void> _loadDraft() async {
     final prefs = await SharedPreferences.getInstance();
 
     final title = prefs.getString(_draftTitleKey) ?? '';
     final content = prefs.getString(_draftContentKey) ?? '';
-    final imagePath = prefs.getString(_draftImagePathKey);
+    final imagePaths = prefs.getStringList(_draftImagePathsKey) ?? [];
 
     setState(() {
       _titleController.text = title;
       _contentController.text = content;
-      if (imagePath != null && imagePath.isNotEmpty) {
-        final file = File(imagePath);
-        if (file.existsSync()) {
-          _selectedImageFile = file;
-        }
-      }
+      _images = imagePaths.map((p) => XFile(p)).toList();
+    });
+
+    // ✅ 한 번 불러왔으면 다음에 들어올 땐 비우기
+    await prefs.remove(_draftTitleKey);
+    await prefs.remove(_draftContentKey);
+    await prefs.remove(_draftImagePathsKey);
+  }
+
+  /// 🔹 이미지 여러 장 선택 (최대 10장)
+  Future<void> _pickImages() async {
+    final remain = 10 - _images.length;
+    if (remain <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이미지는 최대 10장까지 첨부할 수 있어요.')),
+      );
+      return;
+    }
+
+    final picked = await _picker.pickMultiImage();
+    if (picked.isEmpty) return;
+
+    setState(() {
+      _images.addAll(picked.take(remain));
     });
   }
 
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
+  }
 
-
+  /// 🔹 임시저장 (다음에 글쓰기 들어오면 한 번만 복원됨)
   Future<void> _saveTemp() async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString(_draftTitleKey, _titleController.text);
     await prefs.setString(_draftContentKey, _contentController.text);
-
-    if (_selectedImageFile != null) {
-      await prefs.setString(_draftImagePathKey, _selectedImageFile!.path);
-    } else {
-      await prefs.remove(_draftImagePathKey);
-    }
+    await prefs.setStringList(
+      _draftImagePathsKey,
+      _images.map((e) => e.path).toList(),
+    );
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +99,7 @@ class _WritePostPageState extends State<WritePostPage> {
     );
   }
 
-
+  /// 🔹 업로드 → PostItem에 이미지/내용 포함해서 되돌려줌
   void _upload() {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -100,12 +117,21 @@ class _WritePostPageState extends State<WritePostPage> {
       return;
     }
 
-    // 지금은 내용/이미지는 아직 안 쓰고, 제목만 PostItem에 넣어서 되돌려줌
     final newPost = PostItem(
       title: title,
       likes: 0,
       comments: 0,
+      commentItems: [],
+      imagePaths: _images.map((e) => e.path).toList(),
+      content: content,
     );
+
+    // 업로드 했으니 임시저장 내용은 확실히 제거
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.remove(_draftTitleKey);
+      prefs.remove(_draftContentKey);
+      prefs.remove(_draftImagePathsKey);
+    });
 
     Navigator.pop(context, newPost);
   }
@@ -132,7 +158,6 @@ class _WritePostPageState extends State<WritePostPage> {
           ),
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
@@ -162,8 +187,8 @@ class _WritePostPageState extends State<WritePostPage> {
             // 이미지 선택 박스
             Center(
               child: Container(
-                width: 220,
-                height: 180,
+                width: 260,
+                height: 200,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -171,8 +196,8 @@ class _WritePostPageState extends State<WritePostPage> {
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(24),
-                  onTap: _pickImage,  // ← 여기서 갤러리 열기
-                  child: _selectedImageFile == null
+                  onTap: _pickImages,
+                  child: _images.isEmpty
                       ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
@@ -189,14 +214,73 @@ class _WritePostPageState extends State<WritePostPage> {
                       ),
                     ],
                   )
-                      : ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.file(
-                      _selectedImageFile!,
-                      width: 220,
-                      height: 180,
-                      fit: BoxFit.cover,
-                    ),
+                      : Stack(
+                    children: [
+                      // 썸네일 리스트
+                      ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.all(8),
+                        itemCount: _images.length,
+                        itemBuilder: (context, index) {
+                          final img = _images[index];
+                          return Stack(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                width: 120,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  image: DecorationImage(
+                                    image: FileImage(File(img.path)),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: GestureDetector(
+                                  onTap: () => _removeImage(index),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.black54,
+                                    ),
+                                    padding: const EdgeInsets.all(2),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      // 오른쪽 아래에 개수 표시
+                      Positioned(
+                        right: 8,
+                        bottom: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_images.length}/10',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -222,14 +306,13 @@ class _WritePostPageState extends State<WritePostPage> {
                 border: Border.all(color: const Color(0xFFD0C1AE)),
               ),
               child: TextField(
-
                 controller: _contentController,
                 maxLines: 10,
                 minLines: 5,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                  contentPadding:
+                  EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   hintText: '내용을 입력해주세요.',
                   hintStyle: TextStyle(
                     color: Color(0xFFB6A795),
@@ -245,8 +328,7 @@ class _WritePostPageState extends State<WritePostPage> {
               children: [
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side:
-                    const BorderSide(color: Color(0xFFD0C1AE)),
+                    side: const BorderSide(color: Color(0xFFD0C1AE)),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'post.dart';
 
@@ -12,18 +13,18 @@ class BoardDetailPage extends StatefulWidget {
 
 class _BoardDetailPageState extends State<BoardDetailPage> {
   late bool isLiked;
-  late int likeCount;
-
   final TextEditingController _commentController = TextEditingController();
-  final List<String> _comments = [
-    '임시 댓글입니다. 서버 연결 후 실제 댓글이 들어갈 예정이에요.',
-  ];
+
+  // PostItem 안의 댓글 리스트를 그대로 사용
+  List<CommentItem> get _comments => widget.post.commentItems;
+
+  // 이미지 페이지 인덱스 (슬라이더 indicator용)
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    isLiked = false;
-    likeCount = widget.post.likes;
+    isLiked = false; // 나중에 로그인/서버 붙이면 유저별 좋아요 여부로 세팅
   }
 
   @override
@@ -35,7 +36,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   void _toggleLike() {
     setState(() {
       isLiked = !isLiked;
-      likeCount += isLiked ? 1 : -1;
+      widget.post.likes += isLiked ? 1 : -1;
     });
   }
 
@@ -43,8 +44,17 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
+    // TODO: 나중에 실제 로그인된 유저 이름으로 교체
+    const currentUserName = '정우';
+
     setState(() {
-      _comments.add(text);
+      _comments.add(
+        CommentItem(
+          userName: currentUserName,
+          content: text,
+        ),
+      );
+      widget.post.comments = _comments.length;
       _commentController.clear();
     });
   }
@@ -52,6 +62,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   @override
   Widget build(BuildContext context) {
     const bgColor = Color(0xFFF0E8DD);
+    final hasImages = widget.post.imagePaths.isNotEmpty;
+    final contentText = widget.post.content ??
+        '여기에 실제 게시글 내용이 들어갈 예정입니다.\n'
+            '현재는 서버 연동 전이라 예시 텍스트만 보여주고 있어요.';
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -88,15 +102,92 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             ),
             const SizedBox(height: 12),
 
-            // 본문 (지금은 임시 텍스트, 나중에 서버 연동하면 여기 채우면 됨)
-            const Text(
-              '여기에 실제 게시글 내용이 들어갈 예정입니다.\n'
-                  '현재는 서버 연동 전이라 예시 텍스트만 보여주고 있어요.',
-              style: TextStyle(fontSize: 14, height: 1.5),
+            // 🔹 이미지 슬라이더 (여러 장)
+            if (hasImages) ...[
+              SizedBox(
+                height: 240,
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      itemCount: widget.post.imagePaths.length,
+                      onPageChanged: (idx) {
+                        setState(() {
+                          _currentImageIndex = idx;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final path = widget.post.imagePaths[index];
+                        final file = File(path);
+
+                        if (!file.existsSync()) {
+                          // 파일이 없어졌을 경우 대비
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                '이미지를 불러올 수 없습니다.',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.file(
+                            file,
+                            width: double.infinity,
+                            height: 240,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                    if (widget.post.imagePaths.length > 1)
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            widget.post.imagePaths.length,
+                                (i) {
+                              final isActive = i == _currentImageIndex;
+                              return Container(
+                                margin:
+                                const EdgeInsets.symmetric(horizontal: 3),
+                                width: isActive ? 8 : 6,
+                                height: isActive ? 8 : 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isActive
+                                      ? Colors.white
+                                      : Colors.white54,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // 🔹 본문 내용(WritePostPage에서 쓴 내용)
+            Text(
+              contentText,
+              style: const TextStyle(fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 16),
 
-            // 좋아요 / 댓글 수
+            // 좋아요만 표시
             Row(
               children: [
                 IconButton(
@@ -107,22 +198,33 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                     color: const Color(0xFF8F7A64),
                   ),
                 ),
-                Text('$likeCount'),
-                const SizedBox(width: 16),
-                const Icon(Icons.chat_bubble_outline,
-                    size: 18, color: Color(0xFF8F7A64)),
-                const SizedBox(width: 4),
-                Text('${_comments.length}'),
+                Text('${widget.post.likes}'),
               ],
             ),
 
+
             const Divider(height: 32),
 
-            const Text(
-              '댓글',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                const Text(
+                  '댓글',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${_comments.length}',   // 👈 댓글 개수
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF8F7A64),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
+
 
             // 댓글 리스트
             Expanded(
@@ -141,7 +243,21 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                         color: const Color(0xFFFDF7F0),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(c),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c.userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Color(0xFF8F7A64),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(c.content),
+                        ],
+                      ),
                     ),
                   );
                 },

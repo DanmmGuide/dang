@@ -224,14 +224,19 @@ class _BoardPageState extends State<BoardPage> {
     );
   }
 
-  void _openPostDetail(PostItem post) {
-    Navigator.push(
+  void _openPostDetail(PostItem post) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BoardDetailPage(post: post),
       ),
     );
+
+    // 👇 상세페이지에서 PostItem이 수정됐으니까
+    //    메인 리스트도 다시 그려주기
+    setState(() {});
   }
+
 
   void _openFilterSheet() {
     showModalBottomSheet(
@@ -362,6 +367,18 @@ class _PostCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+
+              // 📷 사진 있으면 카메라 아이콘 + 개수
+              if (post.imagePaths.isNotEmpty) ...[
+                const Icon(Icons.photo, size: 16, color: Color(0xFF8F7A64)),
+                const SizedBox(width: 4),
+                Text(
+                  '${post.imagePaths.length}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(width: 12),
+              ],
+
               Row(
                 children: [
                   const Icon(Icons.favorite_border,
@@ -388,6 +405,7 @@ class _PostCard extends StatelessWidget {
     );
   }
 }
+
 
 class _PageNumberBar extends StatelessWidget {
   final int currentPage;
