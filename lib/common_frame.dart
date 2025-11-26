@@ -5,21 +5,26 @@ class CommonFrame extends StatelessWidget {
   final Widget body;
   final int currentIndex;
   final ValueChanged<int> onTapNav;
-  final bool showBackButton;        // ← 새로 추가됨!
+  final bool showBackButton;
   final bool hideBottomNav;
+
+  final String? title;
+  final bool showSettingsIcon;
 
   const CommonFrame({
     super.key,
     required this.body,
     required this.currentIndex,
     required this.onTapNav,
-    this.showBackButton = false,// 기본값: 뒤로가기 없음
+    this.showBackButton = false,
     this.hideBottomNav = false,
+    this.title,
+    this.showSettingsIcon = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final String title = _titleForIndex(currentIndex);
+    final String displayTitle = title ?? _titleForIndex(currentIndex);
 
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +33,6 @@ class CommonFrame extends StatelessWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
 
-        // 🔻 showBackButton 이 true이면 뒤로가기 버튼 표시
         leading: showBackButton
             ? IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -37,7 +41,7 @@ class CommonFrame extends StatelessWidget {
             : null,
 
         title: Text(
-          title,
+          displayTitle,
           style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -46,17 +50,18 @@ class CommonFrame extends StatelessWidget {
         ),
 
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SettingsPage(),
-                ),
-              );
-            },
-          ),
+          if (showSettingsIcon)
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.black),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SettingsPage(),
+                  ),
+                );
+              },
+            ),
         ],
       ),
 
@@ -71,26 +76,31 @@ class CommonFrame extends StatelessWidget {
     return Container(
       height: 75,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        // color: Colors.white, // ❌ 제거됨 (아래 Material로 이동)
         border: Border(
           top: BorderSide(color: Color(0xFFF4F2EF), width: 1),
         ),
       ),
-      padding: const EdgeInsets.only(
-        top: 8,
-        left: 16,
-        right: 16,
-        bottom: 12,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildNavItem(index: 0, label: '홈', icon: Icons.home),
-          _buildNavItem(index: 1, label: '게시판', icon: Icons.list),
-          _buildNavItem(index: 2, label: '가이드', icon: Icons.book_outlined),
-          _buildNavItem(index: 3, label: '콘텐츠', icon: Icons.collections_outlined),
-          _buildNavItem(index: 4, label: '마이페이지', icon: Icons.person_outline),
-        ],
+      child: Material(
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: 8,
+            left: 16,
+            right: 16,
+            bottom: 12,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(index: 0, label: '홈', icon: Icons.home),
+              _buildNavItem(index: 1, label: '게시판', icon: Icons.list),
+              _buildNavItem(index: 2, label: '가이드', icon: Icons.book_outlined),
+              _buildNavItem(index: 3, label: '콘텐츠', icon: Icons.collections_outlined),
+              _buildNavItem(index: 4, label: '마이페이지', icon: Icons.person_outline),
+            ],
+          ),
+        ),
       ),
     );
   }

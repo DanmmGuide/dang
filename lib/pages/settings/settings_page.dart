@@ -1,9 +1,8 @@
-// lib/pages/settings/settings_page.dart
-
 import 'package:flutter/material.dart';
 import '../../common_frame.dart';
 import '../auth/start_page.dart';
 import 'inquiry_page.dart';
+import '../../main.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -17,11 +16,24 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✔ SettingsPage는 RootScreen 안에 포함되지 않는 "독립 페이지"므로 CommonFrame 직접 사용 OK
     return CommonFrame(
+      title: '설정',
       showBackButton: true,
-      currentIndex: -1,  // 탭 선택 없음
-      onTapNav: (_) {},
+      showSettingsIcon: false, // 설정 페이지 안에서는 톱니바퀴 숨김
+      currentIndex: 4, // 마이페이지 탭 활성화
+
+      // 👇 하단바 누르면 메인 화면(RootScreen)으로 이동
+      onTapNav: (index) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            // 이제 main.dart에 있는 RootScreen을 가져옵니다
+            builder: (context) => RootScreen(initialIndex: index),
+          ),
+              (route) => false,
+        );
+      },
+
       body: _buildBody(context),
     );
   }
@@ -58,16 +70,6 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '설정',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1C110C),
-            ),
-          ),
-          const SizedBox(height: 24),
-
           _buildNotificationSwitch(),
           const SizedBox(height: 30),
 
@@ -127,7 +129,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // 버튼 공통
   Widget _buildSettingButton({
     required String label,
     required VoidCallback onPressed,
@@ -156,7 +157,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // --- 공통 다이얼로그 ---
+  // --- 다이얼로그 (팝업) 로직 ---
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,

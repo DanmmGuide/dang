@@ -1,8 +1,6 @@
-// lib/pages/mypage.dart
-
-import 'dart:io'; // 👈 파일 처리를 위해 필요
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // 👈 패키지 임포트
+import 'package:image_picker/image_picker.dart';
 
 class MyPage extends StatefulWidget {
   final ValueChanged<bool>? onEditingChanged;
@@ -13,13 +11,10 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  // 1. 수정 모드 상태 변수 (false: 보기 모드, true: 수정 모드)
   bool _isEditing = false;
+  File? _pickedImage;
 
-  // 2. 이미지 관련 변수
-  File? _pickedImage; // 갤러리에서 가져온 이미지 파일
-
-  // 3. 텍스트 필드 컨트롤러 (입력값을 관리하기 위함)
+  // 컨트롤러들
   late TextEditingController _guardianController;
   late TextEditingController _petNameController;
   late TextEditingController _speciesController;
@@ -28,10 +23,19 @@ class _MyPageState extends State<MyPage> {
   late TextEditingController _neuteredController;
   late TextEditingController _weightController;
 
+  // 👇 [추가됨 1] 데이터 복구를 위한 임시 저장 변수들
+  File? _tempPickedImage;
+  String _tempGuardian = '';
+  String _tempPetName = '';
+  String _tempSpecies = '';
+  String _tempBirth = '';
+  String _tempGender = '';
+  String _tempNeutered = '';
+  String _tempWeight = '';
+
   @override
   void initState() {
     super.initState();
-    // 초기 데이터 설정
     _guardianController = TextEditingController(text: '혀누');
     _petNameController = TextEditingController(text: '코코');
     _speciesController = TextEditingController(text: '랙돌');
@@ -43,7 +47,6 @@ class _MyPageState extends State<MyPage> {
 
   @override
   void dispose() {
-    // 메모리 누수 방지를 위해 컨트롤러 해제
     _guardianController.dispose();
     _petNameController.dispose();
     _speciesController.dispose();
@@ -54,39 +57,59 @@ class _MyPageState extends State<MyPage> {
     super.dispose();
   }
 
-  // 📷 사진 가져오기 로직 (image_picker 사용)
-  Future<void> _pickImage() async {
-    // 수정 모드가 아닐 때는 사진 변경 불가
-    if (!_isEditing) return;
+  // 👇 [추가됨 2] 수정 시작할 때 현재 상태 백업
+  void _backupData() {
+    _tempPickedImage = _pickedImage;
+    _tempGuardian = _guardianController.text;
+    _tempPetName = _petNameController.text;
+    _tempSpecies = _speciesController.text;
+    _tempBirth = _birthController.text;
+    _tempGender = _genderController.text;
+    _tempNeutered = _neuteredController.text;
+    _tempWeight = _weightController.text;
+  }
 
+  // 👇 [추가됨 3] 취소했을 때 백업한 데이터로 복구
+  void _restoreData() {
+    setState(() {
+      _pickedImage = _tempPickedImage;
+      _guardianController.text = _tempGuardian;
+      _petNameController.text = _tempPetName;
+      _speciesController.text = _tempSpecies;
+      _birthController.text = _tempBirth;
+      _genderController.text = _tempGender;
+      _neuteredController.text = _tempNeutered;
+      _weightController.text = _tempWeight;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    if (!_isEditing) return;
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
     if (image != null) {
       setState(() {
-        _pickedImage = File(image.path); // 선택한 파일 경로를 File 객체로 변환
+        _pickedImage = File(image.path);
       });
     }
   }
 
-  // ✏️ 수정/저장 버튼 클릭 시 로직
   void _toggleEditMode() {
     setState(() {
       if (_isEditing) {
-        // 완료(저장) 눌렀을 때 처리
+        // [완료 버튼 누름] -> 저장 로직 수행 (여기서는 그냥 콘솔 출력)
         print("저장됨: ${_petNameController.text}");
+      } else {
+        // [수정 버튼 누름] -> 백업 실행!
+        _backupData(); // 👈 여기서 백업
       }
       _isEditing = !_isEditing;
     });
 
-    // 상위(RootScreen)에게 현재 수정 상태 알려주기
     widget.onEditingChanged?.call(_isEditing);
   }
 
-  // 🔙 뒤로가기(시스템/앱바) 막기 + 경고창
-  Future<bool> _onWillPop() async {
-    if (!_isEditing) return true; // 수정 중 아니면 그냥 나가기 허용
-
+  Future<void> _handleBackPress() async {
     final bool? shouldLeave = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -94,7 +117,7 @@ class _MyPageState extends State<MyPage> {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('작성 내용이 저장되지 않았어요'),
-          content: const Text('계속 작성하시겠습니까, 아니면 작성 취소 후 나가시겠습니까?'),
+          content: const Text('작성을 취소하고 나가시겠습니까?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -104,24 +127,24 @@ class _MyPageState extends State<MyPage> {
             ),
             TextButton(
               onPressed: () {
-                setState(() {
-                  _isEditing = false;
-                });
-                // 상위에도 수정 종료 알리기 → 네비바 다시 표시용
-                widget.onEditingChanged?.call(false);
-                Navigator.of(context).pop(true); // 나가기 허용
+                Navigator.of(context).pop(true); // 나가기(취소) 확정
               },
-              child: const Text(
-                '작성 취소',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text('작성 취소', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
       },
     );
 
-    return shouldLeave ?? false;
+    if (shouldLeave == true) {
+      // 👇 [수정됨] 여기서 데이터 복구 실행!
+      _restoreData();
+
+      setState(() {
+        _isEditing = false;
+      });
+      widget.onEditingChanged?.call(false);
+    }
   }
 
   @override
@@ -129,8 +152,12 @@ class _MyPageState extends State<MyPage> {
     const Color backgroundColor = Color(0xFFF0E8DD);
     final Color activeColor = const Color(0xFFED6D11);
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !_isEditing,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _handleBackPress();
+      },
       child: Container(
         color: backgroundColor,
         width: double.infinity,
@@ -139,7 +166,6 @@ class _MyPageState extends State<MyPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              // 상단 수정/완료 버튼
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
@@ -159,8 +185,6 @@ class _MyPageState extends State<MyPage> {
                   ),
                 ),
               ),
-
-              // 💡 사진 영역
               GestureDetector(
                 onTap: _pickImage,
                 child: Stack(
@@ -180,12 +204,9 @@ class _MyPageState extends State<MyPage> {
                         image: _getImageProvider(),
                       ),
                       child: (_pickedImage == null)
-                          ? const Icon(Icons.pets,
-                          size: 50, color: Colors.grey)
+                          ? const Icon(Icons.pets, size: 50, color: Colors.grey)
                           : null,
                     ),
-
-                    // 수정 모드일 때만 카메라 아이콘
                     if (_isEditing)
                       Positioned(
                         right: 0,
@@ -204,8 +225,6 @@ class _MyPageState extends State<MyPage> {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // 이름
               _isEditing
                   ? SizedBox(
                 width: 150,
@@ -226,14 +245,10 @@ class _MyPageState extends State<MyPage> {
                     fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-
-              // [사용자 정보]
               _buildInfoGroup(title: '[사용자 정보]', children: [
                 _buildInfoBox('보호자 이름', _guardianController),
               ]),
               const SizedBox(height: 20),
-
-              // [반려동물 정보]
               _buildInfoGroup(title: '[반려동물 정보]', children: [
                 _buildInfoBox('반려동물 이름', _petNameController),
                 _buildInfoBox('종', _speciesController),
@@ -270,19 +285,13 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // 이미지 공급자 결정 함수 (파일 vs 에셋)
   DecorationImage? _getImageProvider() {
     if (_pickedImage != null) {
       return DecorationImage(
-        image: FileImage(_pickedImage!), // 갤러리에서 선택한 사진
+        image: FileImage(_pickedImage!),
         fit: BoxFit.cover,
       );
     }
-    // 기본 이미지가 있다면 아래 주석 해제하여 사용
-    // return const DecorationImage(
-    //   image: AssetImage('assets/cat_mypage.png'),
-    //   fit: BoxFit.cover,
-    // );
     return null;
   }
 
@@ -302,7 +311,6 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // 📝 정보 박스 위젯 (TextEditingController를 받도록 수정됨)
   Widget _buildInfoBox(String label, TextEditingController controller,
       {bool isHalf = false}) {
     return Padding(
@@ -314,7 +322,6 @@ class _MyPageState extends State<MyPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            // 수정 모드일 때 테두리 색 변경으로 시각적 힌트 제공
             color: _isEditing ? const Color(0xFFED6D11) : Colors.grey.shade300,
             width: _isEditing ? 1.5 : 1.0,
           ),
@@ -331,15 +338,15 @@ class _MyPageState extends State<MyPage> {
                 controller: controller,
                 style: const TextStyle(fontSize: 16),
                 decoration: const InputDecoration(
-                  border: InputBorder.none, // 밑줄 제거
-                  isDense: true, // 여백 줄임
+                  border: InputBorder.none,
+                  isDense: true,
                   contentPadding: EdgeInsets.zero,
                 ),
               )
                   : Text(
                 controller.text,
                 style: const TextStyle(fontSize: 16),
-                overflow: TextOverflow.ellipsis, // 글자 넘침 방지
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
