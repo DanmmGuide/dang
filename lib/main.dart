@@ -7,6 +7,8 @@ import 'pages/content/mbti_page.dart';
 import 'pages/mypage/my_page.dart';
 import 'pages/auth/start_page.dart';
 
+
+
 void main() {
   runApp(const MyApp());
 }

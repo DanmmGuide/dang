@@ -1,26 +1,64 @@
-// lib/network/the_dog_api_client.dart
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/dog_breed.dart';
 
-/// TheDogAPI 통신 전용 클라이언트 (현재는 '틀'만 있음)
 class TheDogApiClient {
-  static const String baseUrl = 'https://api.thedogapi.com/v1';
+  /// 에뮬레이터 기준 PC의 Flask 서버 주소
+  /// (PC에서 Flask가 5000포트로 뜨고 있을 때)
+  static const String baseUrl = 'http://10.0.2.2:5000/api';
 
-  /// TODO: 실제 API 키 주입
-  final String apiKey;
+  const TheDogApiClient();
 
-  const TheDogApiClient({required this.apiKey});
+  /// Flask 서버에서 번역까지 된 견종 리스트 가져오기
+  ///
+  /// 실제 호출되는 URL 예시:
+  ///   GET /api/dogs/breeds?limit=20&translate=true
+  Future<List<DogBreed>> fetchBreeds({
+    int limit = 50,
+    bool translate = true,
+  }) async {
+    final uri = Uri.parse('$baseUrl/dogs/breeds').replace(
+      queryParameters: {
+        'limit': '$limit',
+        'translate': translate.toString(), // "true" / "false"
+      },
+    );
 
-  /// 모든 품종 리스트 가져오기
-  /// 실제 구현은 나중에 http 패키지 붙일 때 작성
-  Future<List<DogBreed>> fetchBreeds() async {
-    // TODO: http.get('$baseUrl/breeds') 구현
-    throw UnimplementedError('fetchBreeds() 아직 구현 안 됨');
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load breeds from Flask server: '
+            '${response.statusCode} ${response.body}',
+      );
+    }
+
+    // Flask 응답 구조:
+    // {
+    //   "ok": true,
+    //   "count": ...,
+    //   "breeds": [ {...}, {...}, ... ]
+    // }
+    final Map<String, dynamic> jsonMap =
+    jsonDecode(response.body) as Map<String, dynamic>;
+
+    final List<dynamic> breedsJson =
+    (jsonMap['breeds'] as List<dynamic>? ?? <dynamic>[]);
+
+    return breedsJson
+        .map((e) => DogBreed.fromFlaskJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  /// 특정 품종 상세 정보 가져오기 (옵션)
+  /// 특정 품종 상세 정보 (지금 Flask에는 /dogs/breeds/<id> 라우트가 없어서 일단 보류)
+  ///
+  /// 나중에 Flask에
+  ///   GET /api/dogs/breeds/<id>
+  /// 같은 엔드포인트를 만들면 여기서 붙이면 됨.
   Future<DogBreed> fetchBreedDetail(int breedId) async {
-    // TODO: http.get('$baseUrl/breeds/$breedId') 구현
-    throw UnimplementedError('fetchBreedDetail() 아직 구현 안 됨');
+    throw UnimplementedError(
+      'Flask 서버에 /api/dogs/breeds/<id> 엔드포인트가 아직 없습니다.',
+    );
   }
 }
+
