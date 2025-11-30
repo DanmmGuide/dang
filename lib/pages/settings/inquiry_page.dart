@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 👈 패키지 필요
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../common_frame.dart';
 
 class InquiryPage extends StatefulWidget {
@@ -13,14 +13,14 @@ class _InquiryPageState extends State<InquiryPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
 
-  // 💾 임시저장 키 값
+  // 임시저장 키 값
   static const String _prefTitleKey = 'draft_inquiry_title';
   static const String _prefContentKey = 'draft_inquiry_content';
 
   @override
   void initState() {
     super.initState();
-    _loadDraft(); // 📥 페이지 열릴 때 임시저장 불러오기
+    _loadDraft(); // 페이지 열릴 때 임시저장 불러오기
   }
 
   @override
@@ -38,7 +38,6 @@ class _InquiryPageState extends State<InquiryPage> {
       _contentController.text = prefs.getString(_prefContentKey) ?? '';
     });
 
-    // 내용이 있으면 알림 표시
     if (_titleController.text.isNotEmpty || _contentController.text.isNotEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,27 +70,25 @@ class _InquiryPageState extends State<InquiryPage> {
 
   @override
   Widget build(BuildContext context) {
+    return CommonFrame(
+      title: '서비스 문의',
+      showBackButton: true,
+      currentIndex: 4, // 마이페이지 탭 유지
+      onTapNav: (_) {},
+      body: _buildBody(), // 파라미터 전달 방식 제거 (원래대로)
+    );
+  }
+
+  Widget _buildBody() {
+    // 색상 정의를 내부로 복구
     const Color backgroundColor = Color(0xFFF0E8DD);
     const Color fieldFillColor = Colors.white;
     const Color accentColor = Color(0xFFED6D11);
 
-    return CommonFrame(
-      // 👇 [수정] 여기서 타이틀을 '서비스 문의'로 지정
-      title: '서비스 문의',
-      body: _buildBody(backgroundColor, fieldFillColor, accentColor),
-      currentIndex: 4, // 마이페이지 탭 유지
-      onTapNav: (_) {},
-      showBackButton: true,
-    );
-  }
-
-  Widget _buildBody(
-      Color backgroundColor,
-      Color fieldFillColor,
-      Color accentColor,
-      ) {
     return Container(
-      color: backgroundColor,
+      width: double.infinity,
+      height: double.infinity,
+      color: backgroundColor, // 전체 배경색 적용
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
@@ -175,7 +172,7 @@ class _InquiryPageState extends State<InquiryPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: _saveDraft, // 👈 저장 함수 호출
+                      onPressed: _saveDraft,
                       child: Text(
                         '임시저장',
                         style: TextStyle(
@@ -202,8 +199,6 @@ class _InquiryPageState extends State<InquiryPage> {
                         elevation: 0,
                       ),
                       onPressed: () async {
-                        // TODO: 실제 전송 로직 구현
-
                         // 전송 성공 시 임시저장 삭제
                         await _deleteDraft();
 

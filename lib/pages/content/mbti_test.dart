@@ -1,31 +1,27 @@
-// lib/pages/content/MBTI_test.dart
-
 import 'package:flutter/material.dart';
 
-// 1. 질문 데이터 모델 정의
+// 1. 질문 데이터 모델
 class QuizQuestion {
   final String question;
+  final String questionImage;
   final String answer1Text;
-  final String answer1Value;  // MBTI 축(E/I/S/N/T/F/J/P)
-  final String answer1Image;
+  final String answer1Value;
   final String answer2Text;
   final String answer2Value;
-  final String answer2Image;
 
   QuizQuestion({
     required this.question,
+    required this.questionImage,
     required this.answer1Text,
     required this.answer1Value,
-    required this.answer1Image,
     required this.answer2Text,
     required this.answer2Value,
-    required this.answer2Image,
   });
 }
 
 class MBTITestPage extends StatefulWidget {
-  final VoidCallback onTestFinished; // 마지막 문제까지 풀었을 때
-  final VoidCallback onBackPressed;  // 1번 문제에서 ← 눌렀을 때
+  final VoidCallback onTestFinished;
+  final VoidCallback onBackPressed;
 
   const MBTITestPage({
     super.key,
@@ -41,135 +37,104 @@ class _MBTITestPageState extends State<MBTITestPage> {
   int _currentQuestionIndex = 0;
   final List<String> _userAnswers = [];
 
-  // 2. 질문 20개 리스트 (E/I, S/N, T/F, J/P 각각 5문항)
+  // 2. 질문 리스트 (데이터는 동일)
   final List<QuizQuestion> _questions = [
-    // --- 아침 (E vs I) ---
     QuizQuestion(
-      question: '햇살이 비치는 아침! 눈을 뜬 댕댕이는?',
+      question: '햇살이 비치는 아침!\n눈을 뜬 댕댕이는?',
+      questionImage: 'assets/start.jpg',
       answer1Text: '침대로 뛰어올라 주인을 핥으며 깨운다.',
       answer1Value: 'E',
-      answer1Image: 'assets/mbti_test_1.jpg',
       answer2Text: '주인이 일어날 때까지 조용히 기다린다.',
       answer2Value: 'I',
-      answer2Image: 'assets/mbti_test_2.jpg',
     ),
-
-    // --- 산책 준비 (J vs P) ---
     QuizQuestion(
-      question: '"산책 갈까?" 목줄을 꺼내 들자...',
+      question: '"산책 갈까?"\n목줄을 꺼내 들자...',
+      questionImage: 'assets/pomeranian.png',
       answer1Text: '현관 앞에서 빙글빙글! 빨리 나가자고 난리다.',
       answer1Value: 'P',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '익숙한 듯 얌전히 앉아서 채워주길 기다린다.',
       answer2Value: 'J',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 산책 중 만남 (E vs I) ---
     QuizQuestion(
-      question: '산책 중 저기서 다른 강아지 친구가 다가온다!',
+      question: '산책 중 저기서\n다른 강아지 친구가 다가온다!',
+      questionImage: 'assets/cat_image.png',
       answer1Text: '"안녕! 놀자!" 꼬리 흔들며 먼저 다가간다.',
       answer1Value: 'E',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '주인 뒤로 숨거나 못 본 척 지나간다.',
       answer2Value: 'I',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 산책 탐색 (S vs N) ---
     QuizQuestion(
-      question: '길가에 처음 보는 낯선 물건이 떨어져 있다.',
+      question: '길가에 처음 보는\n낯선 물건이 떨어져 있다.',
+      questionImage: 'assets/pomeranian.png',
       answer1Text: '일단 코부터 박고 냄새를 맡아본다.',
       answer1Value: 'S',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '멀리서 "저게 뭐지?" 하며 눈으로 관찰한다.',
       answer2Value: 'N',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 돌발 상황 (J vs P) ---
     QuizQuestion(
-      question: '오늘은 매일 가던 길이 아니라 다른 길로 가보자.',
+      question: '오늘은 매일 가던 길이 아니라\n다른 길로 가보자.',
+      questionImage: 'assets/cat_image.png',
       answer1Text: '"왜 이리로 가?" 버티며 원래 길로 가자고 한다.',
       answer1Value: 'J',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '"오! 새로운 모험이다!" 신나서 앞장선다.',
       answer2Value: 'P',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 집으로 복귀 (T vs F) ---
     QuizQuestion(
-      question: '집에 왔는데 주인이 발을 닦아주려다 실수로 아프게 했다.',
+      question: '집에 왔는데 주인이\n발을 닦아주려다 실수로 아프게 했다.',
+      questionImage: 'assets/pomeranian.png',
       answer1Text: '"깨갱!" 하고 엄살 부리며 위로를 바란다.',
       answer1Value: 'F',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '잠깐 놀랐지만 금방 털고 아무렇지 않게 행동한다.',
       answer2Value: 'T',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 휴식 시간 (S vs N) ---
     QuizQuestion(
-      question: '휴식 중 주인이 간식을 몰래 숨기는 걸 목격했다!',
+      question: '휴식 중 주인이\n간식을 몰래 숨기는 걸 목격했다!',
+      questionImage: 'assets/cat_image.png',
       answer1Text: '냄새를 따라 킁킁거리며 끝까지 찾아낸다.',
       answer1Value: 'S',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '주인의 눈치를 살피며 "주면 안 돼?" 텔레파시를 보낸다.',
       answer2Value: 'N',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 감정 교류 (T vs F) ---
     QuizQuestion(
       question: '주인이 슬픈 영화를 보며 울고 있다.',
+      questionImage: 'assets/pomeranian.png',
       answer1Text: '다가와서 눈물을 핥아주거나 품에 파고든다.',
       answer1Value: 'F',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '멀뚱히 쳐다보다가 자기 장난감을 가지고 논다.',
       answer2Value: 'T',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 저녁 식사 (J vs P) ---
     QuizQuestion(
       question: '밥 먹을 시간이 되었다.',
+      questionImage: 'assets/cat_image.png',
       answer1Text: '배꼽시계 정확하다. 밥그릇을 치며 재촉한다.',
       answer1Value: 'J',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '주면 먹고 아니면 말고, 느긋하게 기다린다.',
       answer2Value: 'P',
-      answer2Image: 'assets/cat_image.png',
     ),
-
-    // --- 취침 (E vs I) ---
     QuizQuestion(
       question: '모두가 잠든 밤, 댕댕이의 잠버릇은?',
+      questionImage: 'assets/pomeranian.png',
       answer1Text: '배를 까뒤집고 대자로 뻗어서 잔다.',
       answer1Value: 'E',
-      answer1Image: 'assets/pomeranian.png',
       answer2Text: '몸을 동그랗게 말고 구석이나 자기 집에서 잔다.',
       answer2Value: 'I',
-      answer2Image: 'assets/cat_image.png',
     ),
   ];
 
-  // 답변 선택
+
   void _handleAnswer(String selectedValue) {
     if (_currentQuestionIndex >= _questions.length) return;
 
     setState(() {
       _userAnswers.add(selectedValue);
-
       if (_currentQuestionIndex < _questions.length - 1) {
         _currentQuestionIndex++;
       } else {
-        widget.onTestFinished(); // MbtiPage가 result로 전환
+        widget.onTestFinished();
       }
     });
   }
 
-  // 뒤로가기 (이전 질문 or START)
   void _handleBack() {
     if (_currentQuestionIndex > 0) {
       setState(() {
@@ -179,159 +144,181 @@ class _MBTITestPageState extends State<MBTITestPage> {
         }
       });
     } else {
-      widget.onBackPressed(); // 첫 문제에서 ← → START
+      widget.onBackPressed();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     const Color backgroundColor = Color(0xFFF0E8DD);
-    const Color buttonColor = Colors.white;
-    const Color borderColor = Color(0xFFE0E0E0);
+
+    const horizontalPadding = 24.0;
 
     if (_questions.isEmpty) {
-      return Container(
-        color: backgroundColor,
-        alignment: Alignment.center,
-        child: const Text('질문 데이터가 없습니다.'),
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: const Center(
+          child: Text('질문 데이터가 없습니다.'),
+        ),
       );
     }
 
     final currentQuestion = _questions[_currentQuestionIndex];
 
-    return Container(
-      color: backgroundColor,
-      width: double.infinity,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 상단 뒤로가기
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _handleBack,
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          // 전체 여백 유지
+          padding: const EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 30.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. 상단 뒤로가기
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: _handleBack,
+                  padding: const EdgeInsets.all(8.0),
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
+              const SizedBox(height: 10),
 
-            // 상단 라벨
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                color: buttonColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor),
+              // 2. 진행 상황 텍스트
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${_currentQuestionIndex + 1} / ${_questions.length}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFED6D11),
+                  ),
+                ),
               ),
-              child: const Text('강아지 MBTI 검사'),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-            // 진행 상황
-            Text(
-              '${_currentQuestionIndex + 1} / ${_questions.length}',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 15),
-
-            // 질문
-            Text(
-              currentQuestion.question,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+              // 3. 진행바
+              Stack(
+                children: [
+                  Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: (_currentQuestionIndex + 1) / _questions.length,
+                    child: Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFED6D11),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            // 답변 1
-            _buildAnswerOption(
-              imagePath: currentQuestion.answer1Image,
-              text: currentQuestion.answer1Text,
-              onTap: () => _handleAnswer(currentQuestion.answer1Value),
-            ),
-            const SizedBox(height: 20),
-
-            const Text(
-              'VS',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-                fontWeight: FontWeight.bold,
+              // 4. 질문 텍스트
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  currentQuestion.question,
+                  style: const TextStyle(
+                    fontSize: 20, // ✅ 24 -> 20로 변경
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1C110C),
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 30),
 
-            // 답변 2
-            _buildAnswerOption(
-              imagePath: currentQuestion.answer2Image,
-              text: currentQuestion.answer2Text,
-              onTap: () => _handleAnswer(currentQuestion.answer2Value),
-            ),
-            const SizedBox(height: 30),
-          ],
+              // 5. 상황 이미지
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16.0),
+                  child: Image.asset(
+                    currentQuestion.questionImage,
+                    width: 200.0,
+                    height: 200.0,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 200.0,
+                        height: 200.0,
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                          size: 40,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // 6. 답변 버튼 1
+              _buildAnswerButton(
+                text: currentQuestion.answer1Text,
+                onTap: () => _handleAnswer(currentQuestion.answer1Value),
+              ),
+              const SizedBox(height: 20),
+
+              // 7. 답변 버튼 2
+              _buildAnswerButton(
+                text: currentQuestion.answer2Text,
+                onTap: () => _handleAnswer(currentQuestion.answer2Value),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildAnswerOption({
-    required String imagePath,
+  // 답변 버튼 위젯
+  Widget _buildAnswerButton({
     required String text,
     required VoidCallback onTap,
   }) {
     const Color buttonColor = Colors.white;
-    const Color borderColor = Color(0xFFE0E0E0);
+    const Color borderColor = Color(0xFFED6D11);
 
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(15.0),
-          child: Image.asset(
-            imagePath,
-            width: double.infinity,
-            height: 200,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: double.infinity,
-                height: 200,
-                color: Colors.grey[200],
-                child: const Icon(
-                  Icons.image_not_supported,
-                  color: Colors.grey,
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 15),
-        Material(
-          color: buttonColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-            side: BorderSide(color: borderColor),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: onTap,
-            child: Container(
-              height: 55,
-              alignment: Alignment.center,
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+    return Material(
+      color: buttonColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor, width: 2.0),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1C110C),
+              height: 1.2,
             ),
+            textAlign: TextAlign.left,
           ),
         ),
-      ],
+      ),
     );
   }
 }

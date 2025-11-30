@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -14,7 +15,6 @@ class _MyPageState extends State<MyPage> {
   bool _isEditing = false;
   File? _pickedImage;
 
-  // 컨트롤러들
   late TextEditingController _guardianController;
   late TextEditingController _petNameController;
   late TextEditingController _speciesController;
@@ -23,7 +23,6 @@ class _MyPageState extends State<MyPage> {
   late TextEditingController _neuteredController;
   late TextEditingController _weightController;
 
-  // 👇 [추가됨 1] 데이터 복구를 위한 임시 저장 변수들
   File? _tempPickedImage;
   String _tempGuardian = '';
   String _tempPetName = '';
@@ -57,7 +56,6 @@ class _MyPageState extends State<MyPage> {
     super.dispose();
   }
 
-  // 👇 [추가됨 2] 수정 시작할 때 현재 상태 백업
   void _backupData() {
     _tempPickedImage = _pickedImage;
     _tempGuardian = _guardianController.text;
@@ -69,7 +67,6 @@ class _MyPageState extends State<MyPage> {
     _tempWeight = _weightController.text;
   }
 
-  // 👇 [추가됨 3] 취소했을 때 백업한 데이터로 복구
   void _restoreData() {
     setState(() {
       _pickedImage = _tempPickedImage;
@@ -94,14 +91,75 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
+  // 아이폰 스타일 날짜 선택기
+  void _selectDate() {
+    if (!_isEditing) return;
+
+    DateTime initialDate = DateTime.now();
+    try {
+      String cleanText = _birthController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanText.length >= 8) {
+        initialDate = DateTime.parse(
+            "${cleanText.substring(0, 4)}-${cleanText.substring(4, 6)}-${cleanText.substring(6, 8)}");
+      }
+    } catch (e) {}
+
+    DateTime tempPickedDate = initialDate;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (BuildContext builder) {
+        return SizedBox(
+          height: 300,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.blue, fontSize: 16)),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _birthController.text =
+                          "${tempPickedDate.year}.${tempPickedDate.month.toString().padLeft(2, '0')}.${tempPickedDate.day.toString().padLeft(2, '0')}.";
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Confirm', style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, thickness: 1),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: initialDate,
+                  maximumDate: DateTime.now(),
+                  onDateTimeChanged: (DateTime newDate) {
+                    tempPickedDate = newDate;
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _toggleEditMode() {
     setState(() {
       if (_isEditing) {
-        // [완료 버튼 누름] -> 저장 로직 수행 (여기서는 그냥 콘솔 출력)
         print("저장됨: ${_petNameController.text}");
       } else {
-        // [수정 버튼 누름] -> 백업 실행!
-        _backupData(); // 👈 여기서 백업
+        _backupData();
       }
       _isEditing = !_isEditing;
     });
@@ -120,15 +178,11 @@ class _MyPageState extends State<MyPage> {
           content: const Text('작성을 취소하고 나가시겠습니까?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false); // 계속 작성
-              },
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('계속 작성'),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(true); // 나가기(취소) 확정
-              },
+              onPressed: () => Navigator.of(context).pop(true),
               child: const Text('작성 취소', style: TextStyle(color: Colors.red)),
             ),
           ],
@@ -137,9 +191,7 @@ class _MyPageState extends State<MyPage> {
     );
 
     if (shouldLeave == true) {
-      // 👇 [수정됨] 여기서 데이터 복구 실행!
       _restoreData();
-
       setState(() {
         _isEditing = false;
       });
@@ -252,7 +304,15 @@ class _MyPageState extends State<MyPage> {
               _buildInfoGroup(title: '[반려동물 정보]', children: [
                 _buildInfoBox('반려동물 이름', _petNameController),
                 _buildInfoBox('종', _speciesController),
-                _buildInfoBox('생년월일', _birthController),
+
+                // 달력 아이콘 연결
+                _buildInfoBox(
+                  '생년월일',
+                  _birthController,
+                  onTap: _selectDate,
+                  icon: Icons.calendar_today_outlined,
+                ),
+
                 Row(
                   children: [
                     Expanded(
@@ -311,8 +371,9 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  // 🔥 [수정] 아이콘 클릭 기능 추가
   Widget _buildInfoBox(String label, TextEditingController controller,
-      {bool isHalf = false}) {
+      {bool isHalf = false, VoidCallback? onTap, IconData? icon}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Container(
@@ -336,6 +397,8 @@ class _MyPageState extends State<MyPage> {
               child: _isEditing
                   ? TextField(
                 controller: controller,
+                readOnly: onTap != null,
+                onTap: onTap,
                 style: const TextStyle(fontSize: 16),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
@@ -349,6 +412,14 @@ class _MyPageState extends State<MyPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (icon != null) ...[
+              const SizedBox(width: 8),
+              // 🔥 아이콘을 GestureDetector로 감싸서 클릭 가능하게 변경
+              GestureDetector(
+                onTap: onTap, // 텍스트 필드와 같은 동작 실행
+                child: Icon(icon, color: Colors.grey.shade400, size: 20),
+              ),
+            ],
           ],
         ),
       ),

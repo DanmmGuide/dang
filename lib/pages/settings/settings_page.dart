@@ -19,15 +19,13 @@ class _SettingsPageState extends State<SettingsPage> {
     return CommonFrame(
       title: '설정',
       showBackButton: true,
-      showSettingsIcon: false, // 설정 페이지 안에서는 톱니바퀴 숨김
-      currentIndex: 4, // 마이페이지 탭 활성화
+      showSettingsIcon: false,
+      currentIndex: 4,
 
-      // 👇 하단바 누르면 메인 화면(RootScreen)으로 이동
       onTapNav: (index) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            // 이제 main.dart에 있는 RootScreen을 가져옵니다
             builder: (context) => RootScreen(initialIndex: index),
           ),
               (route) => false,
@@ -143,13 +141,15 @@ class _SettingsPageState extends State<SettingsPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
         ),
         onPressed: onPressed,
         child: Text(
           label,
           style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF1C110C),
           ),
         ),
