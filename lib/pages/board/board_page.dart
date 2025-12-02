@@ -1,4 +1,9 @@
+// lib/pages/board/board_page.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import 'write_post_page.dart';
 import 'post.dart';
 import 'board_detail_page.dart';
@@ -11,31 +16,67 @@ class BoardPage extends StatefulWidget {
 }
 
 class _BoardPageState extends State<BoardPage> {
-  final List<PostItem> _allPosts = [
-    PostItem(title: '말티즈에게 좋은 간식 뭐가 있을까요?', likes: 0, comments: 0),
-    PostItem(title: '강아지가 길고양이한테 맞았는데...', likes: 2, comments: 3),
-    PostItem(title: '비를 산책 얼마나 자주 가야하나요?', likes: 1, comments: 5),
-    PostItem(title: '생후 8개월 강아지 추천 사료', likes: 3, comments: 1),
-    PostItem(title: '배변 실수 줄이는 팁 공유합니다', likes: 5, comments: 4),
-    PostItem(title: '슬개골 수술 경험 있으신 분', likes: 7, comments: 6),
-    PostItem(title: '산책메이트 구해요 (위치: 여의도공원)', likes: 4, comments: 2),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-    PostItem(title: '최근 3개월 강아지 선호도 순위', likes: 9, comments: 10),
-  ];
+  // ✅ Flask 서버 주소 (에뮬레이터 → PC)
+  static const String _baseUrl = 'http://10.0.2.2:5000/api';
 
+  List<PostItem> _allPosts = []; // 이제 하드코딩 대신 서버 데이터
   String _selectedFilter = '전체';
   int _currentPage = 1;
   static const int _pageSize = 10;
   final TextEditingController _searchController = TextEditingController();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// ✅ 서버에서 게시글 목록 가져오기
+  Future<void> _loadPosts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final uri = Uri.parse('$_baseUrl/posts');
+      final resp = await http.get(uri);
+
+      if (resp.statusCode != 200) {
+        throw Exception(
+            'status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
+      final posts = jsonList
+          .map((e) => PostItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      setState(() {
+        _allPosts = posts;
+        _currentPage = 1;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = '게시글을 불러오는 중 오류가 발생했어요.\n$e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   List<PostItem> get _filteredPosts {
     String query = _searchController.text.trim();
@@ -53,7 +94,7 @@ class _BoardPageState extends State<BoardPage> {
         list.sort((a, b) => b.comments.compareTo(a.comments));
         break;
       case '최신순':
-      // 나중에 createdAt 같은 필드 생기면 정렬
+      // 나중에 createdAt 필드로 정렬 가능
         break;
       case '전체':
       default:
@@ -64,13 +105,39 @@ class _BoardPageState extends State<BoardPage> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // ✅ 로딩 / 에러 처리
+    if (_isLoading) {
+      return Container(
+        color: const Color(0xFFF0E8DD),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Container(
+        color: const Color(0xFFF0E8DD),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: _loadPosts,
+                child: const Text('다시 시도'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final posts = _filteredPosts;
 
     final totalPages = (posts.length / _pageSize).ceil().clamp(1, 999);
@@ -78,7 +145,6 @@ class _BoardPageState extends State<BoardPage> {
     final endIndex = (startIndex + _pageSize).clamp(0, posts.length);
     final pagedPosts = posts.sublist(startIndex, endIndex);
 
-    // ❗ 여기서는 더 이상 Scaffold 쓰지 않고, body만 리턴한다.
     return Container(
       color: const Color(0xFFF0E8DD),
       child: Stack(
@@ -117,7 +183,8 @@ class _BoardPageState extends State<BoardPage> {
 
               // 필터 + 검색
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: const BoxDecoration(
                   color: Color(0xFFF5EDE2),
                   border: Border(
@@ -138,7 +205,8 @@ class _BoardPageState extends State<BoardPage> {
                           ),
                         ),
                         onPressed: _openFilterSheet,
-                        icon: const Icon(Icons.menu, size: 18, color: Colors.black),
+                        icon: const Icon(Icons.menu,
+                            size: 18, color: Colors.black),
                         label: Text(
                           _selectedFilter,
                           style: const TextStyle(
@@ -173,7 +241,8 @@ class _BoardPageState extends State<BoardPage> {
                               ),
                             ),
                             suffixIcon: IconButton(
-                              icon: const Icon(Icons.search, color: Color(0xFF8F7A64)),
+                              icon: const Icon(Icons.search,
+                                  color: Color(0xFF8F7A64)),
                               onPressed: () {
                                 setState(() {
                                   _currentPage = 1;
@@ -202,18 +271,16 @@ class _BoardPageState extends State<BoardPage> {
             child: FloatingActionButton(
               backgroundColor: const Color(0xFF8F7A64),
               onPressed: () async {
-                final newPost = await Navigator.push<PostItem>(
+                // ✅ 글쓰기 후 true가 오면 목록 다시 로딩
+                final created = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const WritePostPage(),
                   ),
                 );
 
-                if (newPost != null) {
-                  setState(() {
-                    _allPosts.insert(0, newPost);
-                    _currentPage = 1;
-                  });
+                if (created == true) {
+                  _loadPosts();
                 }
               },
               child: const Icon(Icons.edit, color: Colors.white),
@@ -231,12 +298,8 @@ class _BoardPageState extends State<BoardPage> {
         builder: (_) => BoardDetailPage(post: post),
       ),
     );
-
-    // 👇 상세페이지에서 PostItem이 수정됐으니까
-    //    메인 리스트도 다시 그려주기
     setState(() {});
   }
-
 
   void _openFilterSheet() {
     showModalBottomSheet(
@@ -406,7 +469,6 @@ class _PostCard extends StatelessWidget {
   }
 }
 
-
 class _PageNumberBar extends StatelessWidget {
   final int currentPage;
   final int totalPages;
@@ -431,7 +493,8 @@ class _PageNumberBar extends StatelessWidget {
           onTap: () => onPageSelected(page),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 6),
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+            padding:
+            const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
             child: Text(
               '$page',
               style: TextStyle(

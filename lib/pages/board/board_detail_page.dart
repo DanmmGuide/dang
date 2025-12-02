@@ -1,5 +1,10 @@
+// lib/pages/board/board_detail_page.dart
 import 'dart:io';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import 'post.dart';
 
 class BoardDetailPage extends StatefulWidget {
@@ -12,6 +17,9 @@ class BoardDetailPage extends StatefulWidget {
 }
 
 class _BoardDetailPageState extends State<BoardDetailPage> {
+  // ✅ Flask 서버 주소
+  static const String _baseUrl = 'http://10.0.2.2:5000/api';
+
   late bool isLiked;
   final TextEditingController _commentController = TextEditingController();
 
@@ -25,6 +33,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   void initState() {
     super.initState();
     isLiked = false; // 나중에 로그인/서버 붙이면 유저별 좋아요 여부로 세팅
+    _loadComments(); // ✅ 디테일 들어오면 서버에서 댓글 불러오기
   }
 
   @override
@@ -33,30 +42,149 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     super.dispose();
   }
 
-  void _toggleLike() {
+  /// ✅ 서버에서 댓글 목록 불러오기
+  Future<void> _loadComments() async {
+    if (widget.post.id == null) return; // id 없으면 서버 댓글 없음
+
+    try {
+      final uri = Uri.parse('$_baseUrl/posts/${widget.post.id}/comments');
+      final resp = await http.get(uri);
+
+      if (resp.statusCode != 200) {
+        throw Exception(
+            'status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final Map<String, dynamic> data =
+      jsonDecode(resp.body) as Map<String, dynamic>;
+      final List<dynamic> list = data['comments'] as List<dynamic>;
+
+      final comments = list
+          .map((e) => CommentItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      setState(() {
+        widget.post.commentItems
+          ..clear()
+          ..addAll(comments);
+        widget.post.comments = comments.length;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글을 불러오는 중 오류가 발생했어요: $e')),
+      );
+    }
+  }
+
+  /// ✅ 좋아요 토글 → 서버에 반영
+  Future<void> _toggleLike() async {
+    // id 없으면(이상한 경우) 로컬만 변경
+    if (widget.post.id == null) {
+      setState(() {
+        isLiked = !isLiked;
+        widget.post.likes += isLiked ? 1 : -1;
+        if (widget.post.likes < 0) widget.post.likes = 0;
+      });
+      return;
+    }
+
+    final oldLiked = isLiked;
+    final oldLikes = widget.post.likes;
+
+    // 🔁 낙관적 업데이트 (UI 먼저 반영)
     setState(() {
       isLiked = !isLiked;
       widget.post.likes += isLiked ? 1 : -1;
+      if (widget.post.likes < 0) widget.post.likes = 0;
     });
+
+    final delta = isLiked ? 1 : -1;
+
+    try {
+      final uri = Uri.parse('$_baseUrl/posts/${widget.post.id}/like');
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'delta': delta}),
+      );
+
+      if (resp.statusCode != 200) {
+        throw Exception(
+            'status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final Map<String, dynamic> data =
+      jsonDecode(resp.body) as Map<String, dynamic>;
+      final newLike = (data['like_count'] ?? widget.post.likes) as int;
+
+      setState(() {
+        widget.post.likes = newLike;
+      });
+    } catch (e) {
+      // 🚨 실패하면 원래 상태로 롤백
+      setState(() {
+        isLiked = oldLiked;
+        widget.post.likes = oldLikes;
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('좋아요 처리에 실패했어요: $e')),
+      );
+    }
   }
 
-  void _addComment() {
+  /// ✅ 댓글 작성 → 서버에 저장
+  Future<void> _addComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
     // TODO: 나중에 실제 로그인된 유저 이름으로 교체
     const currentUserName = '정우';
 
-    setState(() {
-      _comments.add(
-        CommentItem(
-          userName: currentUserName,
-          content: text,
-        ),
+    // id 없으면(아직 서버에 없는 글) 로컬에만 추가
+    if (widget.post.id == null) {
+      setState(() {
+        _comments.add(
+          CommentItem(
+            userName: currentUserName,
+            content: text,
+          ),
+        );
+        widget.post.comments = _comments.length;
+        _commentController.clear();
+      });
+      return;
+    }
+
+    try {
+      final uri = Uri.parse('$_baseUrl/posts/${widget.post.id}/comments');
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'author_name': currentUserName,
+          'content': text,
+        }),
       );
-      widget.post.comments = _comments.length;
+
+      if (resp.statusCode != 201) {
+        throw Exception(
+            'status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      // 입력창 비우기
       _commentController.clear();
-    });
+
+      // ✅ 서버 기준으로 최신 댓글 목록 다시 불러오기
+      await _loadComments();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글 작성에 실패했어요: $e')),
+      );
+    }
   }
 
   @override
@@ -180,7 +308,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               const SizedBox(height: 16),
             ],
 
-            // 🔹 본문 내용(WritePostPage에서 쓴 내용)
+            // 🔹 본문 내용
             Text(
               contentText,
               style: const TextStyle(fontSize: 14, height: 1.5),
@@ -202,7 +330,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               ],
             ),
 
-
             const Divider(height: 32),
 
             Row(
@@ -215,7 +342,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${_comments.length}',   // 👈 댓글 개수
+                  '${_comments.length}', // 👈 댓글 개수
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF8F7A64),
@@ -224,7 +351,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               ],
             ),
             const SizedBox(height: 8),
-
 
             // 댓글 리스트
             Expanded(
@@ -302,3 +428,4 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     );
   }
 }
+

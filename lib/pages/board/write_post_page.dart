@@ -1,7 +1,12 @@
-import 'package:flutter/material.dart';
+// lib/pages/board/write_post_page.dart
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+
 import 'post.dart';
 
 class WritePostPage extends StatefulWidget {
@@ -16,6 +21,9 @@ class _WritePostPageState extends State<WritePostPage> {
   final TextEditingController _contentController = TextEditingController();
 
   final ImagePicker _picker = ImagePicker();
+
+  // 서버 주소
+  static const String _baseUrl = 'http://10.0.2.2:5000/api';
 
   // 여러 장 이미지 (최대 10장)
   List<XFile> _images = [];
@@ -174,8 +182,8 @@ class _WritePostPageState extends State<WritePostPage> {
     );
   }
 
-  /// 업로드 → PostItem에 이미지/내용 포함해서 되돌려줌
-  void _upload() {
+  /// ✅ 업로드 → 서버에 POST 요청
+  Future<void> _upload() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
@@ -192,19 +200,46 @@ class _WritePostPageState extends State<WritePostPage> {
       return;
     }
 
-    final newPost = PostItem(
+    // TODO: 로그인 붙이면 실제 유저 이름으로 교체
+    const authorName = '익명';
+
+    final post = PostItem(
       title: title,
       likes: 0,
       comments: 0,
       commentItems: [],
       imagePaths: _images.map((e) => e.path).toList(),
       content: content,
+      authorName: authorName,
     );
 
-    // 업로드 했으니 임시저장 내용은 확실히 제거
-    _clearDraft();
+    try {
+      final uri = Uri.parse('$_baseUrl/posts');
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(post.toJsonForCreate()),
+      );
 
-    Navigator.pop(context, newPost);
+      if (resp.statusCode != 201) {
+        throw Exception(
+          'status: ${resp.statusCode}, body: ${resp.body}',
+        );
+      }
+
+      // 업로드 했으니 임시저장은 확실히 제거
+      await _clearDraft();
+
+      if (!mounted) return;
+
+      // ✅ BoardPage에 "업로드 성공" 신호 보내기
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('업로드 실패: $e')),
+      );
+    }
   }
 
   @override
@@ -219,7 +254,6 @@ class _WritePostPageState extends State<WritePostPage> {
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
-            // 기존: Navigator.pop(context)
             onPressed: () async {
               final canPop = await _onWillPop();
               if (canPop && mounted) {
@@ -249,8 +283,8 @@ class _WritePostPageState extends State<WritePostPage> {
                   hintText: '제목을 입력하세요.',
                   filled: true,
                   fillColor: const Color(0xFFF5EDE2),
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: const BorderSide(color: Color(0xFFD0C1AE)),
@@ -312,7 +346,8 @@ class _WritePostPageState extends State<WritePostPage> {
                                     borderRadius:
                                     BorderRadius.circular(16),
                                     image: DecorationImage(
-                                      image: FileImage(File(img.path)),
+                                      image:
+                                      FileImage(File(img.path)),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -321,13 +356,16 @@ class _WritePostPageState extends State<WritePostPage> {
                                   right: 4,
                                   top: 4,
                                   child: GestureDetector(
-                                    onTap: () => _removeImage(index),
+                                    onTap: () =>
+                                        _removeImage(index),
                                     child: Container(
-                                      decoration: const BoxDecoration(
+                                      decoration:
+                                      const BoxDecoration(
                                         shape: BoxShape.circle,
                                         color: Colors.black54,
                                       ),
-                                      padding: const EdgeInsets.all(2),
+                                      padding:
+                                      const EdgeInsets.all(2),
                                       child: const Icon(
                                         Icons.close,
                                         size: 14,
@@ -348,7 +386,8 @@ class _WritePostPageState extends State<WritePostPage> {
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.black54,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius:
+                              BorderRadius.circular(12),
                             ),
                             child: Text(
                               '${_images.length}/10',
@@ -382,7 +421,8 @@ class _WritePostPageState extends State<WritePostPage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5EDE2),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFD0C1AE)),
+                  border:
+                  Border.all(color: const Color(0xFFD0C1AE)),
                 ),
                 child: TextField(
                   controller: _contentController,
@@ -390,8 +430,8 @@ class _WritePostPageState extends State<WritePostPage> {
                   minLines: 5,
                   decoration: const InputDecoration(
                     border: InputBorder.none,
-                    contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     hintText: '내용을 입력해주세요.',
                     hintStyle: TextStyle(
                       color: Color(0xFFB6A795),
@@ -407,7 +447,8 @@ class _WritePostPageState extends State<WritePostPage> {
                 children: [
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFD0C1AE)),
+                      side:
+                      const BorderSide(color: Color(0xFFD0C1AE)),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
@@ -434,7 +475,7 @@ class _WritePostPageState extends State<WritePostPage> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    onPressed: _upload,
+                    onPressed: _upload, // ✅ 서버 업로드
                     child: const Text(
                       '업로드',
                       style: TextStyle(
@@ -452,4 +493,3 @@ class _WritePostPageState extends State<WritePostPage> {
     );
   }
 }
-
