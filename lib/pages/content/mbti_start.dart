@@ -1,5 +1,3 @@
-// lib/pages/content/MBTI_start.dart
-
 import 'package:flutter/material.dart';
 
 class MBTIStartPage extends StatelessWidget {
@@ -41,7 +39,7 @@ class MBTIStartPage extends StatelessWidget {
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12, // 14 -> 12
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -50,7 +48,7 @@ class MBTIStartPage extends StatelessWidget {
                     '우리 강아지는\n어떤 성격일까?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24, // 28 -> 24
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: textColor,
                       height: 1.3,
@@ -61,7 +59,7 @@ class MBTIStartPage extends StatelessWidget {
                   Text(
                     '10가지 질문으로 알아보는 반려견 성격 유형',
                     style: TextStyle(
-                      fontSize: 14, // 16 -> 14
+                      fontSize: 14,
                       color: textColor.withOpacity(0.6),
                       fontWeight: FontWeight.w500,
                     ),
@@ -95,7 +93,7 @@ class MBTIStartPage extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 56), // 높이 약간 줄임 (60 -> 56)
+                  minimumSize: const Size(double.infinity, 56),
                   elevation: 5,
                   shadowColor: accentColor.withOpacity(0.4),
                   shape: RoundedRectangleBorder(

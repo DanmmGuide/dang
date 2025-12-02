@@ -51,7 +51,7 @@ class MBTIResultPage extends StatelessWidget {
                 resultTitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 16, // 🔥 14에서 16으로 변경
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                   height: 1.3,
@@ -72,11 +72,11 @@ class MBTIResultPage extends StatelessWidget {
 
               const Spacer(flex: 1),
 
-              // 4. 결과 이미지 (비율 유지)
+              // 4. 결과 이미지
               Expanded(
                 flex: 12,
                 child: Image.asset(
-                  'assets/start.jpg',
+                  'assets/start.jpg', // 결과 이미지 파일명 확인 필요
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -133,7 +133,7 @@ class MBTIResultPage extends StatelessWidget {
                 child: const Text(
                   '다시하기',
                   style: TextStyle(
-                    fontSize: 16, // 🔥 15에서 16으로 변경
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

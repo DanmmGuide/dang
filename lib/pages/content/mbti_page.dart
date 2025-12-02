@@ -40,7 +40,7 @@ class _MbtiPageState extends State<MbtiPage> {
   Widget build(BuildContext context) {
     switch (_currentStep) {
       case 'test':
-      // ❗ mbti_test.dart 에서 생성자 이렇게 되어 있어야 함:
+      // mbti_test.dart 에서 생성자 이렇게 되어 있어야 함:
       // MBTITestPage({
       //   required this.onTestFinished,
       //   required this.onBackPressed,
@@ -51,7 +51,7 @@ class _MbtiPageState extends State<MbtiPage> {
         );
 
       case 'result':
-      // ❗ mbti_result.dart 에서 생성자:
+      // mbti_result.dart 에서 생성자:
       // MBTIResultPage({
       //   required this.onRestartPressed,
       //   required this.onBackPressed,

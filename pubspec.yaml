@@ -106,3 +106,9 @@ flutter:
     - assets/start.jpg
     - assets/mbti_test_1.jpg
     - assets/mbti_test_2.jpg
+
+  fonts:
+    - family: Epilogue
+      fonts:
+        - asset: assets/fonts/Epilogue-VariableFont_wght.ttf
+          weight: 700

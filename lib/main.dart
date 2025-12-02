@@ -7,8 +7,6 @@ import 'pages/content/mbti_page.dart';
 import 'pages/mypage/my_page.dart';
 import 'pages/auth/start_page.dart';
 
-
-
 void main() {
   runApp(const MyApp());
 }
@@ -23,7 +21,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
         useMaterial3: true,
+        fontFamily: 'Epilogue',
       ),
+
       // 앱 처음 켰을 때는 StartPage부터
       home: const StartPage(),
 
@@ -57,7 +57,6 @@ class _RootScreenState extends State<RootScreen> {
   void initState() {
     super.initState();
     // 4. 전달받은 initialIndex로 시작 탭 설정
-    // (설정 페이지에서 마이페이지(4)로 보내면 4번 탭이 열림)
     _currentIndex = widget.initialIndex;
   }
 

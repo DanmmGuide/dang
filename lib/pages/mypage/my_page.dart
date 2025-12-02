@@ -23,6 +23,7 @@ class _MyPageState extends State<MyPage> {
   late TextEditingController _neuteredController;
   late TextEditingController _weightController;
 
+  // 백업용 변수
   File? _tempPickedImage;
   String _tempGuardian = '';
   String _tempPetName = '';
@@ -39,7 +40,7 @@ class _MyPageState extends State<MyPage> {
     _petNameController = TextEditingController(text: '코코');
     _speciesController = TextEditingController(text: '랙돌');
     _birthController = TextEditingController(text: '2024.02.15.');
-    _genderController = TextEditingController(text: '남');
+    _genderController = TextEditingController(text: '수컷');
     _neuteredController = TextEditingController(text: 'O');
     _weightController = TextEditingController(text: '7.5 kg');
   }
@@ -91,7 +92,7 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
-  // 아이폰 스타일 날짜 선택기
+  // 생년월일 선택기
   void _selectDate() {
     if (!_isEditing) return;
 
@@ -115,23 +116,24 @@ class _MyPageState extends State<MyPage> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel', style: TextStyle(color: Colors.blue, fontSize: 16)),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Text('취소', style: TextStyle(color: Colors.blue, fontSize: 16)),
                     ),
-                    TextButton(
-                      onPressed: () {
+                    const Text('생년월일', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    GestureDetector(
+                      onTap: () {
                         setState(() {
                           _birthController.text =
                           "${tempPickedDate.year}.${tempPickedDate.month.toString().padLeft(2, '0')}.${tempPickedDate.day.toString().padLeft(2, '0')}.";
                         });
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Confirm', style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text('완료', style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -145,6 +147,120 @@ class _MyPageState extends State<MyPage> {
                   onDateTimeChanged: (DateTime newDate) {
                     tempPickedDate = newDate;
                   },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 성별 선택기
+  void _selectGender() {
+    if (!_isEditing) return;
+
+    final List<String> genderOptions = ['수컷', '암컷'];
+
+    int initialIndex = genderOptions.indexOf(_genderController.text);
+    if (initialIndex == -1) initialIndex = 0;
+
+    String tempSelected = genderOptions[initialIndex];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: 300,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Text('취소', style: TextStyle(color: Colors.blue, fontSize: 16)),
+                    ),
+                    const Text('성별', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() => _genderController.text = tempSelected);
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('완료', style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, thickness: 1),
+              Expanded(
+                child: CupertinoPicker(
+                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  itemExtent: 32.0,
+                  onSelectedItemChanged: (int index) {
+                    tempSelected = genderOptions[index];
+                  },
+                  children: genderOptions.map((e) => Center(child: Text(e))).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 중성화 선택기
+  void _selectNeutered() {
+    if (!_isEditing) return;
+
+    final List<String> neuteredOptions = ['O', 'X'];
+
+    int initialIndex = neuteredOptions.indexOf(_neuteredController.text);
+    if (initialIndex == -1) initialIndex = 0;
+
+    String tempSelected = neuteredOptions[initialIndex];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: 300,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Text('취소', style: TextStyle(color: Colors.blue, fontSize: 16)),
+                    ),
+                    const Text('중성화 여부', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() => _neuteredController.text = tempSelected);
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('완료', style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, thickness: 1),
+              Expanded(
+                child: CupertinoPicker(
+                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  itemExtent: 32.0,
+                  onSelectedItemChanged: (int index) {
+                    tempSelected = neuteredOptions[index];
+                  },
+                  children: neuteredOptions.map((e) => Center(child: Text(e))).toList(),
                 ),
               ),
             ],
@@ -305,7 +421,6 @@ class _MyPageState extends State<MyPage> {
                 _buildInfoBox('반려동물 이름', _petNameController),
                 _buildInfoBox('종', _speciesController),
 
-                // 달력 아이콘 연결
                 _buildInfoBox(
                   '생년월일',
                   _birthController,
@@ -316,12 +431,23 @@ class _MyPageState extends State<MyPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildInfoBox('성별', _genderController, isHalf: true),
+                      child: _buildInfoBox(
+                        '성별',
+                        _genderController,
+                        isHalf: true,
+                        onTap: _selectGender,
+                        icon: Icons.keyboard_arrow_down,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _buildInfoBox('중성화', _neuteredController,
-                          isHalf: true),
+                      child: _buildInfoBox(
+                        '중성화',
+                        _neuteredController,
+                        isHalf: true,
+                        onTap: _selectNeutered,
+                        icon: Icons.keyboard_arrow_down,
+                      ),
                     ),
                   ],
                 ),
@@ -371,7 +497,6 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // 🔥 [수정] 아이콘 클릭 기능 추가
   Widget _buildInfoBox(String label, TextEditingController controller,
       {bool isHalf = false, VoidCallback? onTap, IconData? icon}) {
     return Padding(
@@ -412,11 +537,10 @@ class _MyPageState extends State<MyPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (icon != null) ...[
+            if (icon != null && _isEditing) ...[
               const SizedBox(width: 8),
-              // 🔥 아이콘을 GestureDetector로 감싸서 클릭 가능하게 변경
               GestureDetector(
-                onTap: onTap, // 텍스트 필드와 같은 동작 실행
+                onTap: onTap,
                 child: Icon(icon, color: Colors.grey.shade400, size: 20),
               ),
             ],

@@ -89,7 +89,7 @@ class _StartPageContent extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const LoginPage(),
+                            builder: (_) => LoginPage(),
                         ),
                       );
                     },
@@ -122,7 +122,7 @@ class _StartPageContent extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const SignupPage(),
+                            builder: (_) => SignupPage(),
                         ),
                       );
                     },
