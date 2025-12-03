@@ -106,6 +106,22 @@ flutter:
     - assets/start.jpg
     - assets/mbti_test_1.jpg
     - assets/mbti_test_2.jpg
+    - assets/ESFP.JPG
+    - assets/INTP.JPG
+    - assets/INFP.JPG
+    - assets/ISFP.JPG
+    - assets/INTJ.JPG
+    - assets/ISTP.JPG
+    - assets/ENTJ.JPG
+    - assets/INFJ.JPG
+    - assets/ISFJ.JPG
+    - assets/ESTP.JPG
+    - assets/ENFJ.JPG
+    - assets/ESFJ.JPG
+    - assets/ISTJ.JPG
+    - assets/ENTP.JPG
+    - assets/ESTJ.JPG
+    - assets/ENFP.JPG
 
   fonts:
     - family: Epilogue

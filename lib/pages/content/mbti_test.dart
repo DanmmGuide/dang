@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'MBTI_result.dart';
 
-// 1. 질문 데이터 모델 (이미지 2개)
+// 1. 질문 데이터 모델
 class QuizQuestion {
   final String question;
   final String imageLeft;
@@ -133,6 +134,29 @@ class _MBTITestPageState extends State<MBTITestPage> {
     ),
   ];
 
+  String _calculateMBTI() {
+    int e = 0, i = 0, s = 0, n = 0, t = 0, f = 0, j = 0, p = 0;
+
+    for (String answer in _userAnswers) {
+      if (answer == 'E') e++;
+      else if (answer == 'I') i++;
+      else if (answer == 'S') s++;
+      else if (answer == 'N') n++;
+      else if (answer == 'T') t++;
+      else if (answer == 'F') f++;
+      else if (answer == 'J') j++;
+      else if (answer == 'P') p++;
+    }
+
+    String mbti = '';
+    mbti += (e >= i) ? 'E' : 'I';
+    mbti += (s >= n) ? 'S' : 'N';
+    mbti += (t >= f) ? 'T' : 'F';
+    mbti += (j >= p) ? 'J' : 'P';
+
+    return mbti;
+  }
+
   void _handleAnswer(String selectedValue) {
     if (_currentQuestionIndex >= _questions.length) return;
 
@@ -141,7 +165,23 @@ class _MBTITestPageState extends State<MBTITestPage> {
       if (_currentQuestionIndex < _questions.length - 1) {
         _currentQuestionIndex++;
       } else {
-        widget.onTestFinished();
+        String result = _calculateMBTI();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MBTIResultPage(
+              finalResult: result,
+              onRestartPressed: () {
+                Navigator.popUntil(context, (route) => route.isFirst);
+              },
+              onBackPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        );
+
       }
     });
   }
@@ -184,7 +224,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 1. 상단 뒤로가기
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -197,7 +236,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
               ),
               const SizedBox(height: 10),
 
-              // 2. 진행 상황
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -211,7 +249,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
               ),
               const SizedBox(height: 10),
 
-              // 3. 진행바
               Stack(
                 children: [
                   Container(
@@ -236,7 +273,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
               ),
               const SizedBox(height: 30),
 
-              // 4. 질문 텍스트
               Align(
                 alignment: Alignment.center,
                 child: Text(
@@ -252,15 +288,12 @@ class _MBTITestPageState extends State<MBTITestPage> {
               ),
               const SizedBox(height: 30),
 
-              // 5. 상황 이미지
               Row(
                 children: [
-                  // 왼쪽 이미지
                   Expanded(
                     child: _buildSideImage(currentQuestion.imageLeft),
                   ),
                   const SizedBox(width: 15),
-                  // 오른쪽 이미지
                   Expanded(
                     child: _buildSideImage(currentQuestion.imageRight),
                   ),
@@ -268,14 +301,12 @@ class _MBTITestPageState extends State<MBTITestPage> {
               ),
               const SizedBox(height: 30),
 
-              // 6. 답변 버튼 1
               _buildAnswerButton(
                 text: currentQuestion.answer1Text,
                 onTap: () => _handleAnswer(currentQuestion.answer1Value),
               ),
               const SizedBox(height: 20),
 
-              // 7. 답변 버튼 2
               _buildAnswerButton(
                 text: currentQuestion.answer2Text,
                 onTap: () => _handleAnswer(currentQuestion.answer2Value),
@@ -288,7 +319,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
     );
   }
 
-  // 이미지 위젯 (공통)
   Widget _buildSideImage(String imagePath) {
     return AspectRatio(
       aspectRatio: 1.0,
@@ -312,7 +342,6 @@ class _MBTITestPageState extends State<MBTITestPage> {
     );
   }
 
-  // 답변 버튼 위젯
   Widget _buildAnswerButton({
     required String text,
     required VoidCallback onTap,
