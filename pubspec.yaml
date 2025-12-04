@@ -122,6 +122,17 @@ flutter:
     - assets/ENTP.JPG
     - assets/ESTJ.JPG
     - assets/ENFP.JPG
+    - assets/choco1.jpg
+    - assets/choco2.jpg
+    - assets/choco3.jpg
+    - assets/choco4.jpg
+    - assets/choco5.jpg
+    - assets/choco6.jpg
+    - assets/choco7.jpg
+    - assets/choco8.jpg
+    - assets/choco9.jpg
+    - assets/choco10.jpg
+    - assets/choco11.jpg
 
   fonts:
     - family: Epilogue
