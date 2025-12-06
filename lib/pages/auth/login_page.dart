@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'info_input_page.dart'; // 👈 정보 입력 페이지로 가기 위해 임포트
+import 'info_input_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onLoginPressed() {
-    // 👇 [수정됨] 로그인 성공 시 '정보 입력 페이지'로 이동
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -45,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Epic',
+            // fontFamily 제거됨
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.black),
@@ -90,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       '댕가이드',
                       style: TextStyle(
-                        fontFamily: 'Epic',
+                        // fontFamily 제거됨
                         fontSize: 16,
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
@@ -101,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                       '여러분들의 소중한 아이들\n똑똑하게 배워요',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: 'Epic',
+                        // fontFamily 제거됨
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
@@ -122,19 +121,19 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.black,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      fontFamily: 'Epic',
+                      // fontFamily 제거됨
                     ),
                   ),
                 ),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _idController,
-                  style: const TextStyle(fontFamily: 'Epic', fontSize: 14),
+                  style: const TextStyle(fontSize: 14), // fontFamily 제거됨
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFFF2EDE8),
                     hintText: '아이디를 입력하세요',
-                    hintStyle: const TextStyle(color: Colors.grey, fontFamily: 'Epic', fontSize: 13),
+                    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13), // fontFamily 제거됨
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -162,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.black,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      fontFamily: 'Epic',
+                      // fontFamily 제거됨
                     ),
                   ),
                 ),
@@ -170,12 +169,12 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: _pwController,
                   obscureText: _obscurePw,
-                  style: const TextStyle(fontFamily: 'Epic', fontSize: 14),
+                  style: const TextStyle(fontSize: 14), // fontFamily 제거됨
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFFF2EDE8),
                     hintText: '비밀번호를 입력하세요',
-                    hintStyle: const TextStyle(color: Colors.grey, fontFamily: 'Epic', fontSize: 13),
+                    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13), // fontFamily 제거됨
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePw ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
@@ -219,7 +218,6 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Epic',
                       ),
                     ),
                   ),

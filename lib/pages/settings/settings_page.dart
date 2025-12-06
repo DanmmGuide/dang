@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../common_frame.dart';
 import '../auth/start_page.dart';
-import 'inquiry_page.dart';
 import '../../main.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -12,8 +11,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _alarmOn = false;
-
   @override
   Widget build(BuildContext context) {
     return CommonFrame(
@@ -68,59 +65,18 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildNotificationSwitch(),
-          const SizedBox(height: 30),
 
-          _buildSettingButton(
-            label: '서비스 문의',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InquiryPage()),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-
+          // 로그아웃 버튼
           _buildSettingButton(
             label: '로그아웃',
             onPressed: () => _showLogoutDialog(context),
           ),
           const SizedBox(height: 16),
 
+          // 회원 탈퇴 버튼
           _buildSettingButton(
             label: '회원 탈퇴',
             onPressed: () => _showWithdrawDialog(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationSwitch() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2EDE8),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.black.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            '알림 받기',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1C110C),
-            ),
-          ),
-          Switch(
-            value: _alarmOn,
-            activeColor: Colors.white,
-            activeTrackColor: const Color(0xFFED6D11),
-            onChanged: (value) => setState(() => _alarmOn = value),
           ),
         ],
       ),
@@ -187,8 +143,9 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (ctx) {
         return _buildConfirmDialog(
           ctx,
-          title: '정말 회원탈퇴 하시겠습니까?',
+          title: '탈퇴 시 계정 정보와\n저장된 반려동물 데이터,\n작성한 게시글 등 모든 기록이\n삭제되며 복구가 불가능합니다.',
           confirmText: '회원탈퇴',
+          fontSize: 18,
           onConfirm: () {
             Navigator.of(ctx).pop();
             Navigator.of(context).pushAndRemoveUntil(
@@ -206,26 +163,28 @@ class _SettingsPageState extends State<SettingsPage> {
         required String title,
         required String confirmText,
         required VoidCallback onConfirm,
+        double fontSize = 15,
       }) {
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF1C110C),
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1C110C),
+                height: 1.5,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             Row(
               children: [
                 Expanded(
@@ -235,6 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text(
@@ -256,6 +216,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: onConfirm,
                     child: Text(

@@ -133,6 +133,26 @@ flutter:
     - assets/choco9.jpg
     - assets/choco10.jpg
     - assets/choco11.jpg
+    - assets/test_1.PNG
+    - assets/test_2.PNG
+    - assets/test_3.PNG
+    - assets/test_4.PNG
+    - assets/test_5.PNG
+    - assets/test_6.PNG
+    - assets/test_7.PNG
+    - assets/test_8.PNG
+    - assets/test_9.PNG
+    - assets/test_10.PNG
+    - assets/test_11.PNG
+    - assets/test_12.PNG
+    - assets/test_13.PNG
+    - assets/test_14.PNG
+    - assets/test_15.PNG
+    - assets/test_16.PNG
+    - assets/test_17.PNG
+    - assets/test_18.PNG
+    - assets/test_19.PNG
+    - assets/test_20.PNG
 
   fonts:
     - family: Epilogue

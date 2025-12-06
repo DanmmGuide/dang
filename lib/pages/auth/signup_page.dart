@@ -21,13 +21,14 @@ class _SignupPageState extends State<SignupPage> {
   // 중복확인 상태 변수
   bool _isIdChecked = false;
 
+  // 서비스 이용약관 전문
   final String _termsOfService = '''
 제1조 (목적)
 본 약관은 '댕가이드'(이하 "회사")가 제공하는 서비스의 이용조건 및 절차, 이용자와 회사의 권리, 의무, 책임사항 및 기타 필요한 사항을 규정함을 목적으로 합니다.
 
 제2조 (용어의 정의)
 1. "서비스"란 회원이 모바일 단말기를 이용하여 반려동물의 정보를 기록하고, 정보를 공유하며, 커뮤니티 활동을 할 수 있는 제반 서비스를 의미합니다.
-2. "회원"이란 본 약관에 동의하고 회사가 정한 가입 절차를 마친 자로서, 회사가 제공하는 서비스를 이용할 수 있는 자를 말합니다.
+2. "회원"이란 본 약관에 동의하고 가입 절차를 마친 자로서, 회사가 제공하는 서비스를 이용할 수 있는 자를 말합니다.
 3. "아이디(ID)"란 회원의 식별과 서비스 이용을 위하여 회원이 정하고 회사가 승인하는 문자와 숫자의 조합을 의미합니다.
 4. "비밀번호"란 회원이 부여받은 아이디와 일치되는 회원임을 확인하고 비밀보호를 위해 회원 자신이 정한 문자 또는 숫자의 조합을 의미합니다.
 
@@ -59,6 +60,7 @@ class _SignupPageState extends State<SignupPage> {
 2. 회원이 계약을 해지할 경우, 관련 법령 및 개인정보처리방침에 따라 회사가 회원정보를 보유하는 경우를 제외하고는 해지 즉시 회원의 모든 데이터는 소멸됩니다.
 ''';
 
+  // 개인정보 처리방침 전문
   final String _privacyPolicy = '''
 1. 개인정보의 수집 및 이용 목적
 '댕가이드'는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
@@ -90,6 +92,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   void initState() {
     super.initState();
+    // 아이디를 수정하면 중복확인을 다시 하도록 초기화
     _idController.addListener(() {
       if (_isIdChecked) {
         setState(() {
@@ -107,26 +110,29 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
+  // 중복확인 로직
   void _checkIdDuplicate() {
     if (_idController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('아이디를 입력해주세요.', style: TextStyle(fontFamily: 'Epic'))),
+        const SnackBar(content: Text('아이디를 입력해주세요.')),
       );
       return;
     }
+
     setState(() {
       _isIdChecked = true;
     });
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: const Text('사용 가능한 아이디입니다.', style: TextStyle(fontFamily: 'Epic', fontWeight: FontWeight.bold)),
+        content: const Text('사용 가능한 아이디입니다.', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('확인', style: TextStyle(color: Color(0xFFED6D11), fontWeight: FontWeight.bold, fontFamily: 'Epic')),
+            child: const Text('확인', style: TextStyle(color: Color(0xFFED6D11), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -139,14 +145,14 @@ class _SignupPageState extends State<SignupPage> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Epic')),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
-          child: Text(content, style: const TextStyle(fontSize: 13, fontFamily: 'Epic', height: 1.6, color: Colors.black87)),
+          child: Text(content, style: const TextStyle(fontSize: 13, height: 1.6, color: Colors.black87)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('닫기', style: TextStyle(color: Color(0xFFED6D11), fontWeight: FontWeight.bold, fontFamily: 'Epic')),
+            child: const Text('닫기', style: TextStyle(color: Color(0xFFED6D11), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -167,7 +173,6 @@ class _SignupPageState extends State<SignupPage> {
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Epic',
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.black),
@@ -185,14 +190,13 @@ class _SignupPageState extends State<SignupPage> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Epic',
                     height: 1.4,
                     color: Color(0xFF1C110C),
                   ),
                 ),
                 const SizedBox(height: 30),
 
-                // 1. 아이디 (중복확인 버튼 포함)
+                // 1. 아이디 입력 (중복확인 버튼 포함)
                 _buildIdFieldWithButton(),
 
                 const SizedBox(height: 20),
@@ -244,7 +248,6 @@ class _SignupPageState extends State<SignupPage> {
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 14,
-                            fontFamily: 'Epic',
                             height: 1.5,
                           ),
                           children: [
@@ -292,34 +295,35 @@ class _SignupPageState extends State<SignupPage> {
                           _pwController.text.isEmpty ||
                           _pwCheckController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('모든 정보를 입력해주세요.', style: TextStyle(fontFamily: 'Epic'))),
+                          const SnackBar(content: Text('모든 정보를 입력해주세요.')),
                         );
                         return;
                       }
 
+                      // 중복확인 체크
                       if (!_isIdChecked) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('아이디 중복확인을 해주세요.', style: TextStyle(fontFamily: 'Epic'))),
+                          const SnackBar(content: Text('아이디 중복확인을 해주세요.')),
                         );
                         return;
                       }
 
                       if (_pwController.text != _pwCheckController.text) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('비밀번호가 일치하지 않습니다.', style: TextStyle(fontFamily: 'Epic'))),
+                          const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
                         );
                         return;
                       }
 
                       if (!_isAgreed) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('약관에 동의해주세요.', style: TextStyle(fontFamily: 'Epic'))),
+                          const SnackBar(content: Text('약관에 동의해주세요.')),
                         );
                         return;
                       }
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('회원가입을 축하합니다!', style: TextStyle(fontFamily: 'Epic'))),
+                        const SnackBar(content: Text('회원가입을 축하합니다!')),
                       );
 
                       Navigator.pushReplacement(
@@ -333,7 +337,6 @@ class _SignupPageState extends State<SignupPage> {
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Epic',
                       ),
                     ),
                   ),
@@ -358,7 +361,6 @@ class _SignupPageState extends State<SignupPage> {
             color: Colors.black,
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            fontFamily: 'Epic',
           ),
         ),
         const SizedBox(height: 8),
@@ -377,13 +379,13 @@ class _SignupPageState extends State<SignupPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
                   controller: _idController,
-                  style: const TextStyle(fontFamily: 'Epic', fontSize: 14),
-                  textAlign: TextAlign.start, // 👈 왼쪽 정렬 명시
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.start,
                   decoration: const InputDecoration(
                     hintText: '아이디를 입력하세요',
-                    hintStyle: TextStyle(color: Colors.grey, fontFamily: 'Epic'),
+                    hintStyle: TextStyle(color: Colors.grey),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 13), // 수직 중앙 정렬
+                    contentPadding: EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),
               ),
@@ -403,7 +405,6 @@ class _SignupPageState extends State<SignupPage> {
                 child: Text(
                   _isIdChecked ? '완료' : '중복확인',
                   style: const TextStyle(
-                    fontFamily: 'Epic',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -433,7 +434,6 @@ class _SignupPageState extends State<SignupPage> {
             color: Colors.black,
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            fontFamily: 'Epic',
           ),
         ),
         const SizedBox(height: 8),
@@ -451,13 +451,12 @@ class _SignupPageState extends State<SignupPage> {
           child: TextField(
             controller: controller,
             obscureText: isObscure,
-            style: const TextStyle(fontFamily: 'Epic', fontSize: 14),
-            textAlign: TextAlign.start, // 👈 왼쪽 정렬 명시
+            style: const TextStyle(fontSize: 14),
+            textAlign: TextAlign.start,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.grey, fontFamily: 'Epic'),
+              hintStyle: const TextStyle(color: Colors.grey),
               border: InputBorder.none,
-              // 👇 [수정] horizontal: 16 제거, vertical만 유지
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
               suffixIcon: onToggleObscure != null
                   ? IconButton(

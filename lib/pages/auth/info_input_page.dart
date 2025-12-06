@@ -32,7 +32,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
     super.dispose();
   }
 
-  // 📅 생년월일 선택기
+  // 생년월일 선택기
   void _selectDate() {
     DateTime initialDate = DateTime.now();
     try {
@@ -94,7 +94,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
-  // ⚧ 성별 선택기
+  // 성별 선택기
   void _selectGender() {
     final List<String> genderOptions = ['수컷', '암컷'];
     int initialIndex = genderOptions.indexOf(_genderController.text);
@@ -147,7 +147,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
-  // ✂️ 중성화 선택기
+  // 중성화 선택기
   void _selectNeutered() {
     final List<String> neuteredOptions = ['O', 'X'];
     int initialIndex = neuteredOptions.indexOf(_neuteredController.text);
@@ -221,7 +221,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Epilogue', // 👈 Epilogue
+            fontFamily: 'Epilogue',
           ),
         ),
         centerTitle: true,
@@ -240,7 +240,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textColor,
-                  fontFamily: 'Epilogue', // 👈 Epilogue
+                  fontFamily: 'Epilogue',
                 ),
               ),
             ),
@@ -258,7 +258,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textColor,
-                  fontFamily: 'Epilogue', // 👈 Epilogue
+                  fontFamily: 'Epilogue',
                 ),
               ),
             ),
@@ -336,7 +336,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Epilogue', // 👈 Epilogue
+                    fontFamily: 'Epilogue',
                   ),
                 ),
               ),
@@ -369,7 +369,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: Colors.black,
-              fontFamily: 'Epilogue', // 👈 Epilogue
+              fontFamily: 'Epilogue',
             ),
           ),
           const SizedBox(width: 15),
@@ -379,7 +379,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
               fontSize: 14,
               color: Colors.grey,
               fontWeight: FontWeight.normal,
-              fontFamily: 'Epilogue', // 👈 Epilogue
+              fontFamily: 'Epilogue',
             ),
           ),
           const SizedBox(width: 15),
@@ -388,11 +388,11 @@ class _InfoInputPageState extends State<InfoInputPage> {
               controller: controller,
               readOnly: onTap != null,
               onTap: onTap,
-              textAlign: TextAlign.start, // 👈 왼쪽 정렬 (기존 유지)
+              textAlign: TextAlign.start,
               style: const TextStyle(
                 fontSize: 15,
                 color: Colors.black,
-                fontFamily: 'Epilogue', // 👈 Epilogue
+                fontFamily: 'Epilogue',
                 fontWeight: FontWeight.w500,
               ),
               decoration: const InputDecoration(
