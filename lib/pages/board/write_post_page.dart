@@ -22,8 +22,8 @@ class _WritePostPageState extends State<WritePostPage> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // 서버 주소
-  static const String _baseUrl = 'http://10.0.2.2:5000/api';
+  // ✅ 서버 주소 (게시판 API prefix까지 포함)
+  static const String _baseUrl = 'http://10.0.2.2:5000/api/board';
 
   // 여러 장 이미지 (최대 10장)
   List<XFile> _images = [];
@@ -182,7 +182,7 @@ class _WritePostPageState extends State<WritePostPage> {
     );
   }
 
-  /// ✅ 업로드 → 서버에 POST 요청
+  /// ✅ 실제 업로드: 글 생성 + (이미지 있으면) 이미지 업로드
   Future<void> _upload() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -200,45 +200,81 @@ class _WritePostPageState extends State<WritePostPage> {
       return;
     }
 
-    // TODO: 로그인 붙이면 실제 유저 이름으로 교체
-    const authorName = '익명';
-
-    final post = PostItem(
-      title: title,
-      likes: 0,
-      comments: 0,
-      commentItems: [],
-      imagePaths: _images.map((e) => e.path).toList(),
-      content: content,
-      authorName: authorName,
-    );
+    // TODO: 로그인 붙이면 실제 유저 id 사용
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id') ?? 1; // 일단 테스트용 1
 
     try {
       final uri = Uri.parse('$_baseUrl/posts');
+
+      // 서버가 기대하는 JSON: { user_id, title, content }
+      final body = <String, dynamic>{
+        'user_id': userId,
+        'title': title,
+        'content': content,
+      };
+
       final resp = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(post.toJsonForCreate()),
+        body: jsonEncode(body),
       );
 
       if (resp.statusCode != 201) {
-        throw Exception(
-          'status: ${resp.statusCode}, body: ${resp.body}',
-        );
+        throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
       }
 
-      // 업로드 했으니 임시저장은 확실히 제거
+      // 예: { "ok": true, "post": { ... } }
+      final Map<String, dynamic> json = jsonDecode(resp.body);
+      if (json['ok'] != true) {
+        throw Exception('서버 ok=false: ${resp.body}');
+      }
+
+      final Map<String, dynamic> createdPost =
+      json['post'] as Map<String, dynamic>;
+      final int postId = createdPost['id'] as int;
+
+      // 🔥 이미지가 있다면 추가로 업로드
+      if (_images.isNotEmpty) {
+        await _uploadImages(postId);
+      }
+
+      // 업로드 했으니 임시저장 삭제
       await _clearDraft();
 
       if (!mounted) return;
-
-      // ✅ BoardPage에 "업로드 성공" 신호 보내기
+      // ✅ BoardPage로 "업로드 완료" 알림
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('업로드 실패: $e')),
       );
+    }
+  }
+
+  /// ✅ 이미지 업로드 (postId 기준으로 Flask에 multipart 전송)
+  Future<void> _uploadImages(int postId) async {
+    for (final xfile in _images) {
+      final file = File(xfile.path);
+      if (!file.existsSync()) continue;
+
+      final uri = Uri.parse('$_baseUrl/posts/$postId/images');
+
+      final request = http.MultipartRequest('POST', uri);
+
+      // Flask에서 request.files["file"] 로 받는다고 가정
+      request.files.add(
+        await http.MultipartFile.fromPath('file', file.path),
+      );
+
+      final streamedResp = await request.send();
+
+      if (streamedResp.statusCode != 200 &&
+          streamedResp.statusCode != 201) {
+        debugPrint(
+            '이미지 업로드 실패: ${streamedResp.statusCode} (path: ${file.path})');
+      }
     }
   }
 
@@ -421,8 +457,7 @@ class _WritePostPageState extends State<WritePostPage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5EDE2),
                   borderRadius: BorderRadius.circular(24),
-                  border:
-                  Border.all(color: const Color(0xFFD0C1AE)),
+                  border: Border.all(color: const Color(0xFFD0C1AE)),
                 ),
                 child: TextField(
                   controller: _contentController,
@@ -430,8 +465,8 @@ class _WritePostPageState extends State<WritePostPage> {
                   minLines: 5,
                   decoration: const InputDecoration(
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     hintText: '내용을 입력해주세요.',
                     hintStyle: TextStyle(
                       color: Color(0xFFB6A795),

@@ -40,7 +40,6 @@ class _BoardPageState extends State<BoardPage> {
     super.dispose();
   }
 
-  /// ✅ 서버에서 게시글 목록 가져오기
   Future<void> _loadPosts() async {
     setState(() {
       _isLoading = true;
@@ -52,11 +51,17 @@ class _BoardPageState extends State<BoardPage> {
       final resp = await http.get(uri);
 
       if (resp.statusCode != 200) {
-        throw Exception(
-            'status: ${resp.statusCode}, body: ${resp.body}');
+        throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
       }
 
-      final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
+      final Map<String, dynamic> json = jsonDecode(resp.body);
+
+      if (json['ok'] != true) {
+        throw Exception('서버에서 ok=false 응답: ${resp.body}');
+      }
+
+      final List<dynamic> jsonList = json['posts'] as List<dynamic>;
+
       final posts = jsonList
           .map((e) => PostItem.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -77,6 +82,7 @@ class _BoardPageState extends State<BoardPage> {
       }
     }
   }
+
 
   List<PostItem> get _filteredPosts {
     String query = _searchController.text.trim();

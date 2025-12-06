@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../network/translation_client.dart';
+
+import '../../models/dog_breed.dart';
+import '../../network/dog_breed_api_client.dart';
 import 'breed_item.dart';
 import 'breed_detail_page.dart';
-import '../../network/the_dog_api_client.dart';
-import '../../database/dog_breed_dao.dart';
-import 'package:Dang_Guide/repositories/dog_repositories.dart';
-
 
 class BreedSelectPage extends StatefulWidget {
   const BreedSelectPage({super.key});
@@ -17,9 +15,10 @@ class BreedSelectPage extends StatefulWidget {
 class _BreedSelectPageState extends State<BreedSelectPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  late final DogRepository _repository;
+  // 🔥 이제는 Repository 대신, 서버 API 클라이언트만 사용
+  final DogBreedApiClient _apiClient = const DogBreedApiClient();
 
-  /// 실제 전체 품종 리스트 (API + DB에서 가져온 것)
+  /// 실제 전체 품종 리스트 (서버에서 가져온 것)
   List<BreedItem> _allBreeds = [];
 
   bool _isLoading = true;
@@ -31,15 +30,8 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
   @override
   void initState() {
     super.initState();
-
-    final apiClient = const TheDogApiClient();
-    final dao = DogBreedDao();
-
-    _repository = DogRepository(apiClient: apiClient, dao: dao);
-
     _loadBreeds();
   }
-
 
   @override
   void dispose() {
@@ -47,7 +39,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
     super.dispose();
   }
 
-  /// Repository 통해 로컬 + API에서 품종 리스트 로딩
+  /// 서버에서 품종 리스트 로딩
   Future<void> _loadBreeds({bool forceRefresh = false}) async {
     setState(() {
       _isLoading = true;
@@ -55,38 +47,21 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
     });
 
     try {
-      // 1) 우선 견종 리스트부터 가져오기 (Flask 200 확인된 부분)
-      final dogBreeds = await _repository.getBreeds(forceRefresh: forceRefresh);
+      // 1) Flask 서버에서 견종 리스트 가져오기
+      final List<DogBreed> dogBreeds = await _apiClient.fetchBreeds();
       debugPrint('🐶 dogBreeds length = ${dogBreeds.length}');
 
-      // dogBreeds가 비어 있으면 바로 에러 처리
       if (dogBreeds.isEmpty) {
         throw Exception('서버에서 견종 정보를 받지 못했어요.');
       }
 
-      // 2) 한글 이름 번역은 "옵션"으로 처리 (실패해도 리스트는 나와야 함)
-      Map<String, String> koMap = {};
-      try {
-        final uniqueNames = dogBreeds.map((b) => b.name).toSet().toList();
-
-        debugPrint('🌏 translate uniqueNames length = ${uniqueNames.length}');
-
-        final translationClient = const TranslationClient(
-          // 🔥 여기 꼭 실제 주소로! (에뮬레이터 ⇒ PC 플라스크)
-          baseUrl: 'http://10.0.2.2:5000/api',
-        );
-
-        koMap = await translationClient.translateNames(uniqueNames);
-        debugPrint('🌏 translated map size = ${koMap.length}');
-      } catch (e) {
-        // 번역 실패해도 전체 UI는 살려둔다
-        debugPrint('⚠ 번역 실패 (무시하고 영어 이름만 사용): $e');
-      }
-
-      // 3) BreedItem 리스트 생성 (한글 이름 있으면 사용)
+      // 2) 서버에서 이미 한국어(name_ko 등)를 내려주므로 번역 API는 필요 없음
       final breeds = dogBreeds.map((dog) {
-        final ko = koMap[dog.name];
-        return BreedItem.fromDogBreed(dog, nameKo: ko);
+        // BreedItem.fromDogBreed 안에서 nameKo를 우선 쓰도록 만들어놨다고 가정
+        return BreedItem.fromDogBreed(
+          dog,
+          nameKo: dog.nameKo, // 없으면 모델에서 nameEn으로 fallback
+        );
       }).toList();
 
       setState(() {
@@ -94,7 +69,6 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
         _isLoading = false;
       });
     } catch (e) {
-      // 여기까지 오면 "견종 리스트 자체"를 못 받은 경우
       debugPrint('❌ _loadBreeds error: $e');
       setState(() {
         _errorMessage = '견종 정보를 불러오는 중 오류가 발생했어요.\n$e';
@@ -102,8 +76,6 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
       });
     }
   }
-
-
 
   /// 검색 + 필터 적용된 리스트
   List<BreedItem> get _filteredBreeds {
@@ -232,7 +204,6 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
               ),
               const SizedBox(height: 8),
 
-              // 상태별 분기
               if (_isLoading) ...[
                 const Expanded(
                   child: Center(
@@ -266,7 +237,6 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
                 ),
                 const SizedBox(height: 12),
 
-                // 종 카드 그리드 + 당겨서 새로고침
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () => _loadBreeds(forceRefresh: true),
@@ -274,7 +244,7 @@ class _BreedSelectPageState extends State<BreedSelectPage> {
                       itemCount: breeds.length,
                       gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2, // 한 줄에 2개
+                        crossAxisCount: 2,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
                         childAspectRatio: 0.85,

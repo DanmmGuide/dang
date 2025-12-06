@@ -23,16 +23,23 @@ class BoardApiClient {
         .toList();
   }
 
-  Future<void> createPost(PostItem post) async {
+  Future<void> createPost(PostItem post, int userId) async {
     final uri = Uri.parse('$baseUrl/posts');
+
+    final body = {
+      'user_id': userId,
+      'title': post.title,
+      'content': post.content ?? '',
+    };
+
     final resp = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(post.toJsonForCreate()),
+      body: jsonEncode(body),
     );
 
     if (resp.statusCode != 201) {
-      throw Exception('게시글 작성 실패: ${resp.statusCode} ${resp.body}');
+      throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
     }
   }
 }

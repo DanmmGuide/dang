@@ -33,16 +33,22 @@ class BreedDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // DogBreed 원본 데이터
+    // 서버에서 온 DogBreed 원본 데이터 (ko/en 둘 다 가지고 있음)
     final dog = breed.breed;
 
-    final lifeSpan = dog.lifeSpan ?? '정보 없음';
-    final temperament = dog.temperament ?? '정보 없음';
-    final origin = dog.origin ?? '정보 없음';
-    final bredFor = dog.bredFor ?? '정보 없음';
-    final group = dog.breedGroup ?? '정보 없음';
-    final weight = dog.weightMetric ?? '정보 없음';
-    final height = dog.heightMetric ?? '정보 없음';
+    // 한국어 우선, 없으면 영어로 fallback
+    final lifeSpan =
+        dog.lifeSpanKo ?? dog.lifeSpanEn ?? '정보 없음';
+    final temperament =
+        dog.temperamentKo ?? dog.temperamentEn ?? '정보 없음';
+    final origin =
+        dog.originKo ?? dog.originEn ?? '정보 없음';
+    final bredFor =
+        dog.bredForKo ?? dog.bredForEn ?? '정보 없음';
+    final group =
+        dog.breedGroupKo ?? dog.breedGroupEn ?? '정보 없음';
+    final weight = dog.weightKg ?? '정보 없음';
+    final height = dog.heightCm ?? '정보 없음';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0E8DD),
@@ -70,6 +76,21 @@ class BreedDetailPage extends StatelessWidget {
               )
                   : _buildImagePlaceholder(),
             ),
+
+            const SizedBox(height: 16),
+
+            // 영어 이름 있으면 서브타이틀로 보여주기 (옵션)
+            if (dog.nameEn.isNotEmpty)
+              Center(
+                child: Text(
+                  dog.nameEn,
+                  style: const TextStyle(
+                    color: Color(0xFF555555),
+                    fontSize: 14,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ),
 
             const SizedBox(height: 24),
 
@@ -127,7 +148,7 @@ class BreedDetailPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // ───────── 훈련 난이도 (추후 알고리즘 넣을 수 있음) ─────────
+            // ───────── 훈련 난이도 ─────────
             buildSectionTitle("훈련 난이도"),
             const SizedBox(height: 6),
             buildSectionContent(
