@@ -4,7 +4,7 @@ import 'pages/home/home_page.dart';
 import 'pages/board/board_page.dart';
 import 'pages/guide/breed_select_page.dart';
 import 'pages/content/mbti_page.dart';
-import 'pages/mypage/my_page.dart';
+import 'pages/my_page/my_page.dart';
 import 'pages/auth/start_page.dart';
 
 void main() {
@@ -91,12 +91,14 @@ class _RootScreenState extends State<RootScreen> {
         return const MbtiPage();
       case 4:
         return MyPage(
+          userId: 1,   // 여기에 실제 로그인 후 받은 userId 넣어야 함
           onEditingChanged: (isEditing) {
             setState(() {
-              _isMyPageEditing = isEditing; // 수정 모드 반영
+              _isMyPageEditing = isEditing;
             });
           },
         );
+
       default:
         return const HomePageClean();
     }

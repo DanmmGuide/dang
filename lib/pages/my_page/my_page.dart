@@ -2,10 +2,13 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 
 class MyPage extends StatefulWidget {
+
+  final int userId;
   final ValueChanged<bool>? onEditingChanged;
-  const MyPage({super.key, this.onEditingChanged});
+  const MyPage({super.key, required this.userId, this.onEditingChanged});
 
   @override
   State<MyPage> createState() => _MyPageState();
@@ -36,13 +39,15 @@ class _MyPageState extends State<MyPage> {
   @override
   void initState() {
     super.initState();
-    _guardianController = TextEditingController(text: '혀누');
-    _petNameController = TextEditingController(text: '코코');
-    _speciesController = TextEditingController(text: '랙돌');
-    _birthController = TextEditingController(text: '2024.02.15.');
-    _genderController = TextEditingController(text: '수컷');
-    _neuteredController = TextEditingController(text: 'O');
-    _weightController = TextEditingController(text: '7.5 kg');
+    _guardianController = TextEditingController();
+    _petNameController = TextEditingController();
+    _speciesController = TextEditingController();
+    _birthController = TextEditingController();
+    _genderController = TextEditingController();
+    _neuteredController = TextEditingController();
+    _weightController = TextEditingController();
+
+    _loadMypage();
   }
 
   @override
@@ -273,7 +278,7 @@ class _MyPageState extends State<MyPage> {
   void _toggleEditMode() {
     setState(() {
       if (_isEditing) {
-        print("저장됨: ${_petNameController.text}");
+        _saveProfile();
       } else {
         _backupData();
       }
@@ -418,9 +423,10 @@ class _MyPageState extends State<MyPage> {
               ]),
               const SizedBox(height: 20),
               _buildInfoGroup(title: '[반려동물 정보]', children: [
+                // 1. 반려동물 이름
                 _buildInfoBox('반려동물 이름', _petNameController),
-                _buildInfoBox('종', _speciesController),
 
+                // 2. 생년월일
                 _buildInfoBox(
                   '생년월일',
                   _birthController,
@@ -428,8 +434,17 @@ class _MyPageState extends State<MyPage> {
                   icon: Icons.calendar_today_outlined,
                 ),
 
+                // 3. 종 | 성별
                 Row(
                   children: [
+                    Expanded(
+                      child: _buildInfoBox(
+                        '종',
+                        _speciesController,
+                        isHalf: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _buildInfoBox(
                         '성별',
@@ -439,7 +454,12 @@ class _MyPageState extends State<MyPage> {
                         icon: Icons.keyboard_arrow_down,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                  ],
+                ),
+
+                // 4. 중성화 | 몸무게
+                Row(
+                  children: [
                     Expanded(
                       child: _buildInfoBox(
                         '중성화',
@@ -449,20 +469,19 @@ class _MyPageState extends State<MyPage> {
                         icon: Icons.keyboard_arrow_down,
                       ),
                     ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoBox('몸무게', _weightController, isHalf: true),
-                    ),
                     const SizedBox(width: 10),
-                    const Expanded(
-                      child: SizedBox(height: 55),
+                    Expanded(
+                      child: _buildInfoBox(
+                        '몸무게',
+                        _weightController,
+                        isHalf: true,
+                        keyboardType: TextInputType.number,
+                      ),
                     ),
                   ],
                 ),
               ]),
+
               const SizedBox(height: 50),
             ],
           ),
@@ -497,8 +516,17 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  Widget _buildInfoBox(String label, TextEditingController controller,
-      {bool isHalf = false, VoidCallback? onTap, IconData? icon}) {
+  Widget _buildInfoBox(
+      String label,
+      TextEditingController controller, {
+        bool isHalf = false,
+        VoidCallback? onTap,
+        IconData? icon,
+        TextInputType keyboardType = TextInputType.text,
+      }) {
+
+    bool isWeight = label == "몸무게";
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Container(
@@ -515,28 +543,44 @@ class _MyPageState extends State<MyPage> {
         child: Row(
           children: [
             Text('$label |',
-                style:
-                const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(width: 10),
+
             Expanded(
               child: _isEditing
                   ? TextField(
                 controller: controller,
-                readOnly: onTap != null,
-                onTap: onTap,
-                style: const TextStyle(fontSize: 16),
+                keyboardType: isWeight ? TextInputType.number : keyboardType,
+                onChanged: (value) {
+                  if (isWeight) {
+                    // 숫자 + 소수점만 허용
+                    String numeric = value.replaceAll(RegExp(r'[^0-9.]'), '');
+
+                    controller.text = numeric;
+
+                    // 커서 끝으로 유지
+                    controller.selection = TextSelection.fromPosition(
+                      TextPosition(offset: controller.text.length),
+                    );
+                  }
+                },
+
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                 ),
+                style: const TextStyle(fontSize: 16),
               )
                   : Text(
-                controller.text,
+                isWeight
+                    ? "${controller.text} kg"
+                    : controller.text,
                 style: const TextStyle(fontSize: 16),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+
             if (icon != null && _isEditing) ...[
               const SizedBox(width: 8),
               GestureDetector(
@@ -549,4 +593,55 @@ class _MyPageState extends State<MyPage> {
       ),
     );
   }
+
+  Future<void> _saveProfile() async {
+    try {
+      final dio = Dio();
+
+      final data = {
+        "guardian_name": _guardianController.text,
+        "pet_name": _petNameController.text,
+        "species": _speciesController.text,
+        "birth": _birthController.text,
+        "gender": _genderController.text,
+        "neutered": _neuteredController.text,
+        "weight": _weightController.text,
+      };
+
+      await dio.put(
+        "http://localhost:5000/api/my_page/${widget.userId}",
+        data: data,
+      );
+
+    } catch (e) {
+      print("프로필 저장 오류: $e");
+    }
+  }
+  Future<void> _loadMypage() async {
+    try {
+      final dio = Dio();
+
+      final res = await dio.get(
+        "http://localhost:5000/api/my_page/${widget.userId}",
+      );
+
+      final data = res.data;
+
+      if (data != null) {
+        setState(() {
+          _guardianController.text = data["guardian_name"] ?? '';
+          _petNameController.text = data["pet_name"] ?? '';
+          _speciesController.text = data["species"] ?? '';
+          _birthController.text = data["birth"] ?? '';
+          _genderController.text = data["gender"] ?? '';
+          _neuteredController.text = data["neutered"] ?? '';
+          _weightController.text = data["weight"] ?? '';
+        });
+      }
+
+    } catch (e) {
+      print("마이페이지 불러오기 오류: $e");
+    }
+  }
+
 }
