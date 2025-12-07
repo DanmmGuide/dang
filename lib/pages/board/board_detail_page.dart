@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'post.dart';
 
 class BoardDetailPage extends StatefulWidget {
-  final PostItem post; // 목록에서 넘어온 간단 정보 (id, title 등)
+  final PostItem post;
 
   const BoardDetailPage({super.key, required this.post});
 
@@ -16,8 +16,8 @@ class BoardDetailPage extends StatefulWidget {
 }
 
 class _BoardDetailPageState extends State<BoardDetailPage> {
-  // ✅ 서버 주소 (BoardPage, WritePostPage랑 통일)
-  static const String _baseUrl = 'http://10.0.2.2:5000/api/board';
+  // ✅ 서버 주소 (BoardPage, WritePostPage와 동일)
+  static const String _baseUrl = 'http://10.0.2.2:5000/api';
 
   late PostItem _post;
   bool _isLoading = true;
@@ -38,6 +38,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     });
 
     try {
+      // 🔥 GET /api/posts/<id>
       final uri = Uri.parse('$_baseUrl/posts/${_post.id}');
       final resp = await http.get(uri);
 

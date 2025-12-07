@@ -22,8 +22,8 @@ class _WritePostPageState extends State<WritePostPage> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // ✅ 서버 주소 (게시판 API prefix까지 포함)
-  static const String _baseUrl = 'http://10.0.2.2:5000/api/board';
+  // ✅ 서버 주소 (게시판 API prefix까지만)
+  static const String _baseUrl = 'http://10.0.2.2:5000/api';
 
   // 여러 장 이미지 (최대 10장)
   List<XFile> _images = [];
@@ -60,7 +60,6 @@ class _WritePostPageState extends State<WritePostPage> {
       _images = imagePaths.map((p) => XFile(p)).toList();
     });
 
-    // 한 번 불러왔으면 다음에 들어올 땐 비우기
     await prefs.remove(_draftTitleKey);
     await prefs.remove(_draftContentKey);
     await prefs.remove(_draftImagePathsKey);
@@ -90,7 +89,6 @@ class _WritePostPageState extends State<WritePostPage> {
     });
   }
 
-  /// 임시저장 (다음에 글쓰기 들어오면 한 번만 복원됨)
   Future<void> _saveTemp() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -107,7 +105,6 @@ class _WritePostPageState extends State<WritePostPage> {
     );
   }
 
-  /// 임시저장 데이터 완전히 삭제
   Future<void> _clearDraft() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_draftTitleKey);
@@ -115,27 +112,21 @@ class _WritePostPageState extends State<WritePostPage> {
     await prefs.remove(_draftImagePathsKey);
   }
 
-  /// 작성 중인지 여부 (아무것도 안 쓰면 경고 안 띄워도 됨)
   bool _hasEditing() {
     return _titleController.text.trim().isNotEmpty ||
         _contentController.text.trim().isNotEmpty ||
         _images.isNotEmpty;
   }
 
-  /// 뒤로가기/나가기 시 호출되는 공용 함수
   Future<bool> _onWillPop() async {
-    // 아무것도 안 쓴 상태면 그냥 나가기
     if (!_hasEditing()) {
       return true;
     }
 
     final result = await _showLeaveDialog();
-    // result == true  => 페이지 나감
-    // result == false => 페이지 유지
     return result ?? false;
   }
 
-  /// "임시저장 / 작성취소 / 계속작성" 다이얼로그
   Future<bool?> _showLeaveDialog() {
     return showDialog<bool>(
       context: context,
@@ -152,15 +143,13 @@ class _WritePostPageState extends State<WritePostPage> {
           actions: [
             TextButton(
               onPressed: () {
-                // 계속 작성
-                Navigator.pop(context, false);
+                Navigator.pop(context, false); // 계속 작성
               },
               child: const Text('계속 작성'),
             ),
             TextButton(
               onPressed: () async {
-                // 작성 취소 (임시저장 삭제 후 나가기)
-                await _clearDraft();
+                await _clearDraft();           // 작성 취소
                 Navigator.pop(context, true);
               },
               child: const Text(
@@ -170,8 +159,7 @@ class _WritePostPageState extends State<WritePostPage> {
             ),
             TextButton(
               onPressed: () async {
-                // 임시저장 후 나가기
-                await _saveTemp();
+                await _saveTemp();             // 임시저장
                 Navigator.pop(context, true);
               },
               child: const Text('임시저장'),
@@ -182,7 +170,7 @@ class _WritePostPageState extends State<WritePostPage> {
     );
   }
 
-  /// ✅ 실제 업로드: 글 생성 + (이미지 있으면) 이미지 업로드
+  /// ✅ 글 생성 + (이미지 있으면) 이미지 업로드
   Future<void> _upload() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -200,14 +188,13 @@ class _WritePostPageState extends State<WritePostPage> {
       return;
     }
 
-    // TODO: 로그인 붙이면 실제 유저 id 사용
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('user_id') ?? 1; // 일단 테스트용 1
+    final userId = prefs.getInt('user_id') ?? 1; // 임시: 1
 
     try {
+      // 🔥 글 생성: POST /api/posts
       final uri = Uri.parse('$_baseUrl/posts');
 
-      // 서버가 기대하는 JSON: { user_id, title, content }
       final body = <String, dynamic>{
         'user_id': userId,
         'title': title,
@@ -224,7 +211,6 @@ class _WritePostPageState extends State<WritePostPage> {
         throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
       }
 
-      // 예: { "ok": true, "post": { ... } }
       final Map<String, dynamic> json = jsonDecode(resp.body);
       if (json['ok'] != true) {
         throw Exception('서버 ok=false: ${resp.body}');
@@ -239,11 +225,9 @@ class _WritePostPageState extends State<WritePostPage> {
         await _uploadImages(postId);
       }
 
-      // 업로드 했으니 임시저장 삭제
       await _clearDraft();
 
       if (!mounted) return;
-      // ✅ BoardPage로 "업로드 완료" 알림
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
@@ -253,35 +237,35 @@ class _WritePostPageState extends State<WritePostPage> {
     }
   }
 
-  /// ✅ 이미지 업로드 (postId 기준으로 Flask에 multipart 전송)
+  /// ✅ 이미지 업로드: POST /api/posts/<postId>/images
   Future<void> _uploadImages(int postId) async {
+    final uri = Uri.parse('$_baseUrl/posts/$postId/images');
+    final request = http.MultipartRequest('POST', uri);
+
+    // 🔥 Flask 쪽에서 request.files.getlist("images") 로 받으니까
+    //    필드 이름은 꼭 "images" 여야 함.
     for (final xfile in _images) {
       final file = File(xfile.path);
       if (!file.existsSync()) continue;
 
-      final uri = Uri.parse('$_baseUrl/posts/$postId/images');
-
-      final request = http.MultipartRequest('POST', uri);
-
-      // Flask에서 request.files["file"] 로 받는다고 가정
       request.files.add(
-        await http.MultipartFile.fromPath('file', file.path),
+        await http.MultipartFile.fromPath('images', file.path),
       );
+    }
 
-      final streamedResp = await request.send();
+    final streamedResp = await request.send();
+    final resp = await http.Response.fromStream(streamedResp);
 
-      if (streamedResp.statusCode != 200 &&
-          streamedResp.statusCode != 201) {
-        debugPrint(
-            '이미지 업로드 실패: ${streamedResp.statusCode} (path: ${file.path})');
-      }
+    if (resp.statusCode != 201) {
+      throw Exception(
+          '이미지 업로드 실패: ${resp.statusCode}, body: ${resp.body}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _onWillPop, // ← 안드로이드 뒤로가기 제스처까지 여기로 옴
+      onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
