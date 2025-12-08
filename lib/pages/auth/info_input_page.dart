@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:dio/dio.dart';
+
 import '../../main.dart';
+import '../../network/api_config.dart';
 
 class InfoInputPage extends StatefulWidget {
-  /// ✅ 로그인에서 받은 userId
-  final int userId;
+  final int userId; // ← 로그인에서 받은 userId
 
   const InfoInputPage({
     super.key,
@@ -16,7 +18,8 @@ class InfoInputPage extends StatefulWidget {
 }
 
 class _InfoInputPageState extends State<InfoInputPage> {
-  final TextEditingController _idController =
+  // 보호자 / 반려동물 정보 입력 필드
+  final TextEditingController _guardianController =
   TextEditingController(text: '혀누');
   final TextEditingController _petNameController =
   TextEditingController(text: '코코');
@@ -29,105 +32,58 @@ class _InfoInputPageState extends State<InfoInputPage> {
   final TextEditingController _neuteredController =
   TextEditingController(text: 'O');
   final TextEditingController _weightController =
-  TextEditingController(text: '7.5 kg');
-  final TextEditingController _etcController =
-  TextEditingController(text: '-');
+  TextEditingController(text: '7.5');
 
   @override
   void dispose() {
-    _idController.dispose();
+    _guardianController.dispose();
     _petNameController.dispose();
     _speciesController.dispose();
     _birthController.dispose();
     _genderController.dispose();
     _neuteredController.dispose();
     _weightController.dispose();
-    _etcController.dispose();
     super.dispose();
   }
 
-  // 생년월일 선택기
+  // ------------------ 날짜 선택기 ------------------
   void _selectDate() {
     DateTime initialDate = DateTime.now();
-    try {
-      String cleanText =
-      _birthController.text.replaceAll(RegExp(r'[^0-9]'), '');
-      if (cleanText.length >= 8) {
-        initialDate = DateTime.parse(
-          "${cleanText.substring(0, 4)}-"
-              "${cleanText.substring(4, 6)}-"
-              "${cleanText.substring(6, 8)}",
-        );
-      }
-    } catch (e) {}
 
-    DateTime tempPickedDate = initialDate;
+    try {
+      String clean = _birthController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      if (clean.length >= 8) {
+        initialDate = DateTime.parse(
+            "${clean.substring(0, 4)}-${clean.substring(4, 6)}-${clean.substring(6, 8)}");
+      }
+    } catch (_) {}
+
+    DateTime tempDate = initialDate;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      builder: (BuildContext builder) {
+      builder: (_) {
         return SizedBox(
           height: 300,
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
-                          fontFamily: 'Epilogue',
-                          color: Colors.blue,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      '생년월일',
-                      style: TextStyle(
-                        fontFamily: 'Epilogue',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _birthController.text =
-                          "${tempPickedDate.year}."
-                              "${tempPickedDate.month.toString().padLeft(2, '0')}."
-                              "${tempPickedDate.day.toString().padLeft(2, '0')}.";
-                        });
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text(
-                        '완료',
-                        style: TextStyle(
-                          fontFamily: 'Epilogue',
-                          color: Colors.blue,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              _buildPickerHeader(
+                title: '생년월일',
+                onConfirm: () {
+                  setState(() {
+                    _birthController.text =
+                    "${tempDate.year}.${tempDate.month.toString().padLeft(2, '0')}.${tempDate.day.toString().padLeft(2, '0')}.";
+                  });
+                  Navigator.pop(context);
+                },
               ),
-              const Divider(height: 1, thickness: 1),
               Expanded(
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
                   initialDateTime: initialDate,
                   maximumDate: DateTime.now(),
-                  onDateTimeChanged: (DateTime newDate) {
-                    tempPickedDate = newDate;
-                  },
+                  onDateTimeChanged: (newDate) => tempDate = newDate,
                 ),
               ),
             ],
@@ -137,163 +93,69 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
-  // 성별 선택기
+  // ------------------ 성별 선택기 ------------------
   void _selectGender() {
-    final List<String> genderOptions = ['수컷', '암컷'];
-    int initialIndex = genderOptions.indexOf(_genderController.text);
-    if (initialIndex == -1) initialIndex = 0;
-    String tempSelected = genderOptions[initialIndex];
+    final options = ['수컷', '암컷'];
+    int index = options.indexOf(_genderController.text);
+    if (index == -1) index = 0;
+    String temp = options[index];
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      builder: (BuildContext context) {
-        return SizedBox(
-          height: 300,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
-                          fontFamily: 'Epilogue',
-                          color: Colors.blue,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      '성별',
-                      style: TextStyle(
-                        fontFamily: 'Epilogue',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _genderController.text = tempSelected);
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text(
-                        '완료',
-                        style: TextStyle(
-                          fontFamily: 'Epilogue',
-                          color: Colors.blue,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, thickness: 1),
-              Expanded(
-                child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(
-                    initialItem: initialIndex,
-                  ),
-                  itemExtent: 32.0,
-                  onSelectedItemChanged: (int index) {
-                    tempSelected = genderOptions[index];
-                  },
-                  children: genderOptions
-                      .map(
-                        (e) => Center(
-                      child: Text(
-                        e,
-                        style: const TextStyle(fontFamily: 'Epilogue'),
-                      ),
-                    ),
-                  )
-                      .toList(),
-                ),
-              ),
-            ],
-          ),
-        );
+    _showPicker(
+      title: '성별',
+      options: options,
+      initialIndex: index,
+      onConfirmed: () {
+        setState(() => _genderController.text = temp);
       },
+      onChanged: (i) => temp = options[i],
     );
   }
 
-  // 중성화 선택기
+  // ------------------ 중성화 선택기 ------------------
   void _selectNeutered() {
-    final List<String> neuteredOptions = ['O', 'X'];
-    int initialIndex = neuteredOptions.indexOf(_neuteredController.text);
-    if (initialIndex == -1) initialIndex = 0;
-    String tempSelected = neuteredOptions[initialIndex];
+    final options = ['O', 'X'];
+    int index = options.indexOf(_neuteredController.text);
+    if (index == -1) index = 0;
+    String temp = options[index];
 
+    _showPicker(
+      title: '중성화 여부',
+      options: options,
+      initialIndex: index,
+      onConfirmed: () {
+        setState(() => _neuteredController.text = temp);
+      },
+      onChanged: (i) => temp = options[i],
+    );
+  }
+
+  // ------------------ Picker UI 공통 함수 ------------------
+  void _showPicker({
+    required String title,
+    required List<String> options,
+    required int initialIndex,
+    required VoidCallback onConfirmed,
+    required ValueChanged<int> onChanged,
+  }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      builder: (BuildContext context) {
+      builder: (_) {
         return SizedBox(
           height: 300,
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
-                          fontFamily: 'Epilogue',
-                          color: Colors.blue,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      '중성화 여부',
-                      style: TextStyle(
-                        fontFamily: 'Epilogue',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(
-                                () => _neuteredController.text = tempSelected);
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text(
-                        '완료',
-                        style: TextStyle(
-                          fontFamily: 'Epilogue',
-                          color: Colors.blue,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              _buildPickerHeader(
+                title: title,
+                onConfirm: onConfirmed,
               ),
-              const Divider(height: 1, thickness: 1),
               Expanded(
                 child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(
-                    initialItem: initialIndex,
-                  ),
+                  scrollController:
+                  FixedExtentScrollController(initialItem: initialIndex),
                   itemExtent: 32.0,
-                  onSelectedItemChanged: (int index) {
-                    tempSelected = neuteredOptions[index];
-                  },
-                  children: neuteredOptions
+                  onSelectedItemChanged: onChanged,
+                  children: options
                       .map(
                         (e) => Center(
                       child: Text(
@@ -312,11 +174,75 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
+  Widget _buildPickerHeader({
+    required String title,
+    required VoidCallback onConfirm,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Text(
+              '취소',
+              style: TextStyle(color: Colors.blue, fontSize: 16),
+            ),
+          ),
+          Text(
+            title,
+            style:
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          GestureDetector(
+            onTap: onConfirm,
+            child: const Text(
+              '완료',
+              style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------------------ 서버 저장 ------------------
+  Future<void> _saveProfile() async {
+    try {
+      final dio = Dio(
+        BaseOptions(baseUrl: ApiConfig.baseUrl),
+      );
+
+      final data = {
+        "guardian_name": _guardianController.text,
+        "pet_name": _petNameController.text,
+        "species": _speciesController.text,
+        "birth": _birthController.text,
+        "gender": _genderController.text,
+        "neutered": _neuteredController.text,
+        "weight": _weightController.text,
+      };
+
+      await dio.put(
+        "/my_page/${widget.userId}",
+        data: data,
+      );
+
+      print("프로필 저장 성공");
+    } catch (e) {
+      print("프로필 저장 오류: $e");
+    }
+  }
+
+  // ------------------ UI ------------------
   @override
   Widget build(BuildContext context) {
     const Color backgroundColor = Color(0xFFF0E8DD);
     const Color buttonColor = Color(0xFFED6D11);
-    const Color textColor = Color(0xFF1C110C);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -344,6 +270,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
           children: [
             const SizedBox(height: 20),
 
+            // ------------------ 사용자 정보 ------------------
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -351,17 +278,17 @@ class _InfoInputPageState extends State<InfoInputPage> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: textColor,
                   fontFamily: 'Epilogue',
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            _buildInputBox('아이디', _idController),
+            _buildInputBox('보호자 이름', _guardianController),
 
             const SizedBox(height: 40),
 
+            // ------------------ 반려동물 정보 ------------------
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -369,7 +296,6 @@ class _InfoInputPageState extends State<InfoInputPage> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: textColor,
                   fontFamily: 'Epilogue',
                 ),
               ),
@@ -378,6 +304,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
 
             _buildInputBox('반려동물 이름', _petNameController),
             const SizedBox(height: 12),
+
             _buildInputBox('종', _speciesController),
             const SizedBox(height: 12),
 
@@ -412,16 +339,11 @@ class _InfoInputPageState extends State<InfoInputPage> {
             ),
             const SizedBox(height: 12),
 
-            Row(
-              children: [
-                Expanded(child: _buildInputBox('몸무게', _weightController)),
-                const SizedBox(width: 12),
-                const Expanded(child: SizedBox()),
-              ],
-            ),
+            _buildInputBox('몸무게', _weightController),
 
             const SizedBox(height: 50),
 
+            // ------------------ 확인 버튼 ------------------
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -431,15 +353,14 @@ class _InfoInputPageState extends State<InfoInputPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  elevation: 0,
                 ),
-                onPressed: () {
+                onPressed: () async {
+                  await _saveProfile();
+
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      // ✅ userId를 RootScreen으로 전달
-                      builder: (context) =>
-                          RootScreen(userId: widget.userId),
+                      builder: (_) => RootScreen(userId: widget.userId),
                     ),
                         (route) => false,
                   );
@@ -455,13 +376,13 @@ class _InfoInputPageState extends State<InfoInputPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 
+  // ------------------ 입력 박스 공통 UI ------------------
   Widget _buildInputBox(
       String label,
       TextEditingController controller, {
@@ -474,10 +395,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF2EDE8),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: Colors.black.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.black.withOpacity(0.1)),
       ),
       child: Row(
         children: [
@@ -486,7 +404,6 @@ class _InfoInputPageState extends State<InfoInputPage> {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
               fontFamily: 'Epilogue',
             ),
           ),
@@ -496,41 +413,28 @@ class _InfoInputPageState extends State<InfoInputPage> {
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey,
-              fontWeight: FontWeight.normal,
-              fontFamily: 'Epilogue',
             ),
           ),
           const SizedBox(width: 15),
+
+          // input
           Expanded(
             child: TextField(
               controller: controller,
               readOnly: onTap != null,
               onTap: onTap,
-              textAlign: TextAlign.start,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black,
-                fontFamily: 'Epilogue',
-                fontWeight: FontWeight.w500,
-              ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
               ),
             ),
           ),
-          if (icon != null) ...[
-            const SizedBox(width: 8),
+
+          if (icon != null)
             GestureDetector(
               onTap: onTap,
-              child: Icon(
-                icon,
-                color: Colors.grey.shade400,
-                size: 20,
-              ),
+              child: Icon(icon, color: Colors.grey.shade400, size: 20),
             ),
-          ],
         ],
       ),
     );
