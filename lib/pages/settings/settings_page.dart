@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../common_frame.dart';
 import '../auth/start_page.dart';
 import '../../main.dart';
 
+import '../../network/user_api_client.dart';    // 🔥 회원탈퇴 API
+
+
 class SettingsPage extends StatefulWidget {
-  /// ✅ 현재 로그인한 유저 id
+  /// 현재 로그인한 유저의 ID
   final int userId;
 
   const SettingsPage({
@@ -17,6 +22,17 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final _userApiClient = const UserApiClient();   // 🔥 회원탈퇴 API
+  final TextEditingController _pwController = TextEditingController();
+
+  bool _isWithdrawing = false;
+
+  @override
+  void dispose() {
+    _pwController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CommonFrame(
@@ -24,20 +40,18 @@ class _SettingsPageState extends State<SettingsPage> {
       showBackButton: true,
       showSettingsIcon: false,
       currentIndex: 4,
-
       onTapNav: (index) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (context) => RootScreen(
-              userId: widget.userId,   // ✅ userId 같이 전달
+              userId: widget.userId,
               initialIndex: index,
             ),
           ),
               (route) => false,
         );
       },
-
       body: _buildBody(context),
     );
   }
@@ -79,12 +93,13 @@ class _SettingsPageState extends State<SettingsPage> {
             label: '로그아웃',
             onPressed: () => _showLogoutDialog(context),
           ),
+
           const SizedBox(height: 16),
 
           // 회원 탈퇴 버튼
           _buildSettingButton(
-            label: '회원 탈퇴',
-            onPressed: () => _showWithdrawDialog(context),
+            label: _isWithdrawing ? '탈퇴 처리 중...' : '회원 탈퇴',
+            onPressed: _isWithdrawing ? null : () => _showWithdrawDialog(context),
           ),
         ],
       ),
@@ -93,7 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSettingButton({
     required String label,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -121,8 +136,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // --- 다이얼로그 로직 ---
-
+  // ==============================
+  //  🔥  로그아웃 다이얼로그
+  // ==============================
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -134,6 +150,7 @@ class _SettingsPageState extends State<SettingsPage> {
           confirmText: '로그아웃',
           onConfirm: () {
             Navigator.of(ctx).pop();
+
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const StartPage()),
                   (route) => false,
@@ -144,28 +161,149 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // ==============================
+  //  🔥  회원탈퇴 다이얼로그
+  // ==============================
   void _showWithdrawDialog(BuildContext context) {
+    _pwController.clear();
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        return _buildConfirmDialog(
-          ctx,
-          title: '탈퇴 시 계정 정보와\n저장된 반려동물 데이터,\n작성한 게시글 등 모든 기록이\n삭제되며 복구가 불가능합니다.',
-          confirmText: '회원탈퇴',
-          fontSize: 18,
-          onConfirm: () {
-            Navigator.of(ctx).pop();
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const StartPage()),
-                  (route) => false,
-            );
-          },
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '탈퇴 시 계정 정보와 저장된\n반려동물 데이터, 게시글 등이 모두 삭제되며\n복구가 불가능합니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1C110C),
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 비밀번호 재입력
+                TextField(
+                  controller: _pwController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: '비밀번호 재입력',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('돌아가기'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEE6F7E),
+                        ),
+                        onPressed: () async {
+                          Navigator.of(ctx).pop();
+                          await _handleWithdraw();
+                        },
+                        child: const Text(
+                          '회원탈퇴',
+                          style: TextStyle(
+                            color: Color(0xFF1C110C),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
+  // ==============================
+  //  🔥 실제 회원탈퇴 처리 로직
+  // ==============================
+  Future<void> _handleWithdraw() async {
+    final password = _pwController.text.trim();
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비밀번호를 입력해 주세요.')),
+      );
+      return;
+    }
+
+    // username은 로그인 시 SharedPreferences에 저장되어 있다고 가정
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username');
+
+    if (username == null || username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인 정보를 찾을 수 없습니다.')),
+      );
+      return;
+    }
+
+    setState(() => _isWithdrawing = true);
+
+    try {
+      // 🔥 서버에 탈퇴 요청 (POST /users/delete)
+      await _userApiClient.deleteUser(
+        username: username,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      // 로컬 로그인 정보 삭제
+      await prefs.remove('username');
+      await prefs.remove('user_id');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('회원탈퇴가 완료되었습니다.')),
+      );
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const StartPage()),
+            (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('회원탈퇴에 실패했습니다. 다시 시도해주세요.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isWithdrawing = false);
+      }
+    }
+  }
+
+  // ==============================
+  //  🔥 다이얼로그 UI 공통
+  // ==============================
   Widget _buildConfirmDialog(
       BuildContext context, {
         required String title,
@@ -189,7 +327,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 fontSize: fontSize,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1C110C),
-                height: 1.5,
               ),
             ),
             const SizedBox(height: 30),
@@ -197,23 +334,8 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF2EDE8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
-                    ),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      '돌아가기',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1C110C),
-                      ),
-                    ),
+                    child: const Text('돌아가기'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -221,26 +343,19 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFEE6F7E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      elevation: 0,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: onConfirm,
                     child: Text(
                       confirmText,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
                         color: Color(0xFF1C110C),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ),
               ],
-            ),
+            )
           ],
         ),
       ),
