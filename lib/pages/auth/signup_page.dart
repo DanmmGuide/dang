@@ -25,7 +25,7 @@ class _SignupPageState extends State<SignupPage> {
   bool _isSubmitting = false;
 
   // ------------------
-  // 약관 전문 (기존 유지)
+  // 약관 전문
   // ------------------
   final String _termsOfService = '''
 제1조 (목적)
@@ -112,7 +112,7 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   // -----------------------
-  // 아이디 중복확인 API (기존 유지)
+  // 아이디 중복확인 API
   // -----------------------
   Future<void> _checkIdDuplicate() async {
     final username = _idController.text.trim();
@@ -146,7 +146,7 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   // -----------------------
-  // 회원가입 API (기존 유지)
+  // 회원가입 API
   // -----------------------
   Future<void> _submitSignup() async {
     if (_idController.text.isEmpty ||
@@ -229,7 +229,12 @@ class _SignupPageState extends State<SignupPage> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        content: Text(msg),
+        title: const Text("약관 내용", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        
+        content: SingleChildScrollView(
+          child: Text(msg),
+        ),
+
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -245,8 +250,8 @@ class _SignupPageState extends State<SignupPage> {
   // -----------------------
   @override
   Widget build(BuildContext context) {
-    const Color backgroundColor = Color(0xFFF0E8DD); // 베이지 배경
-    const Color buttonColor = Color(0xFFED6D11); // 주황색
+    const Color backgroundColor = Color(0xFFF0E8DD);
+    const Color buttonColor = Color(0xFFED6D11);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -267,7 +272,7 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,13 +290,9 @@ class _SignupPageState extends State<SignupPage> {
             ),
             const SizedBox(height: 40),
 
-            // -----------------------
-            // 아이디 입력 + 중복확인 버튼
-            // -----------------------
             _buildIdWithCheckButton(buttonColor),
             const SizedBox(height: 20),
 
-            // 비밀번호
             _buildPasswordField(
               label: "비밀번호",
               hint: "비밀번호를 입력하세요",
@@ -302,7 +303,6 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 20),
 
-            // 비밀번호 확인
             _buildPasswordField(
               label: "비밀번호 확인",
               hint: "비밀번호를 한번 더 입력하세요",
@@ -313,12 +313,10 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 24),
 
-            // 약관 동의
             _buildAgreement(),
 
             const SizedBox(height: 40),
 
-            // 가입 버튼
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -349,7 +347,7 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   // -----------------------------------------------------------
-  // 위젯들 (디자인 수정됨, 힌트 왼쪽 정렬 추가)
+  // 위젯들
   // -----------------------------------------------------------
   Widget _buildIdWithCheckButton(Color buttonColor) {
     return Column(
@@ -368,11 +366,11 @@ class _SignupPageState extends State<SignupPage> {
                 height: 50,
                 child: TextField(
                   controller: _idController,
-                  textAlign: TextAlign.start, // 👈 힌트 텍스트 왼쪽 정렬
+                  textAlign: TextAlign.start,
                   style: const TextStyle(fontSize: 15),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color(0xFFF2EDE8), // 연한 회색 배경
+                    fillColor: const Color(0xFFF2EDE8),
                     hintText: "아이디를 입력하세요",
                     hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -395,7 +393,7 @@ class _SignupPageState extends State<SignupPage> {
             const SizedBox(width: 10),
             SizedBox(
               height: 50,
-              width: 100, // 버튼 너비 고정
+              width: 100,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isIdChecked ? Colors.grey : buttonColor,
@@ -435,7 +433,7 @@ class _SignupPageState extends State<SignupPage> {
           child: TextField(
             controller: controller,
             obscureText: obscure,
-            textAlign: TextAlign.start, // 👈 힌트 텍스트 왼쪽 정렬
+            textAlign: TextAlign.start,
             style: const TextStyle(fontSize: 15),
             decoration: InputDecoration(
               filled: true,
@@ -488,7 +486,7 @@ class _SignupPageState extends State<SignupPage> {
         const SizedBox(width: 8),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 2), // 텍스트 높이 보정
+            padding: const EdgeInsets.only(top: 2),
             child: RichText(
               text: TextSpan(
                 style: const TextStyle(color: Colors.black, fontSize: 14, height: 1.4),
