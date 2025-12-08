@@ -4,9 +4,10 @@ import 'package:dio/dio.dart';
 
 import '../../main.dart';
 import '../../network/api_config.dart';
+import '../../common_frame.dart';
 
 class InfoInputPage extends StatefulWidget {
-  final int userId; // ← 로그인에서 받은 userId
+  final int userId;
 
   const InfoInputPage({
     super.key,
@@ -18,21 +19,14 @@ class InfoInputPage extends StatefulWidget {
 }
 
 class _InfoInputPageState extends State<InfoInputPage> {
-  // 보호자 / 반려동물 정보 입력 필드
-  final TextEditingController _guardianController =
-  TextEditingController(text: '혀누');
-  final TextEditingController _petNameController =
-  TextEditingController(text: '코코');
-  final TextEditingController _speciesController =
-  TextEditingController(text: '랙돌');
-  final TextEditingController _birthController =
-  TextEditingController(text: '2024.02.15.');
-  final TextEditingController _genderController =
-  TextEditingController(text: '수컷');
-  final TextEditingController _neuteredController =
-  TextEditingController(text: 'O');
-  final TextEditingController _weightController =
-  TextEditingController(text: '7.5');
+  // ------------------ 입력 필드 (초기값 제거됨) ------------------
+  final TextEditingController _guardianController = TextEditingController();
+  final TextEditingController _petNameController = TextEditingController();
+  final TextEditingController _speciesController = TextEditingController();
+  final TextEditingController _birthController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController();
+  final TextEditingController _neuteredController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
 
   @override
   void dispose() {
@@ -54,7 +48,8 @@ class _InfoInputPageState extends State<InfoInputPage> {
       String clean = _birthController.text.replaceAll(RegExp(r'[^0-9]'), '');
       if (clean.length >= 8) {
         initialDate = DateTime.parse(
-            "${clean.substring(0, 4)}-${clean.substring(4, 6)}-${clean.substring(6, 8)}");
+          "${clean.substring(0, 4)}-${clean.substring(4, 6)}-${clean.substring(6, 8)}",
+        );
       }
     } catch (_) {}
 
@@ -104,14 +99,12 @@ class _InfoInputPageState extends State<InfoInputPage> {
       title: '성별',
       options: options,
       initialIndex: index,
-      onConfirmed: () {
-        setState(() => _genderController.text = temp);
-      },
+      onConfirmed: () => setState(() => _genderController.text = temp),
       onChanged: (i) => temp = options[i],
     );
   }
 
-  // ------------------ 중성화 선택기 ------------------
+  // ------------------ 중성화 여부 선택기 ------------------
   void _selectNeutered() {
     final options = ['O', 'X'];
     int index = options.indexOf(_neuteredController.text);
@@ -122,14 +115,12 @@ class _InfoInputPageState extends State<InfoInputPage> {
       title: '중성화 여부',
       options: options,
       initialIndex: index,
-      onConfirmed: () {
-        setState(() => _neuteredController.text = temp);
-      },
+      onConfirmed: () => setState(() => _neuteredController.text = temp),
       onChanged: (i) => temp = options[i],
     );
   }
 
-  // ------------------ Picker UI 공통 함수 ------------------
+  // ------------------ Picker 공통 UI ------------------
   void _showPicker({
     required String title,
     required List<String> options,
@@ -145,26 +136,13 @@ class _InfoInputPageState extends State<InfoInputPage> {
           height: 300,
           child: Column(
             children: [
-              _buildPickerHeader(
-                title: title,
-                onConfirm: onConfirmed,
-              ),
+              _buildPickerHeader(title: title, onConfirm: onConfirmed),
               Expanded(
                 child: CupertinoPicker(
-                  scrollController:
-                  FixedExtentScrollController(initialItem: initialIndex),
-                  itemExtent: 32.0,
+                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  itemExtent: 32,
                   onSelectedItemChanged: onChanged,
-                  children: options
-                      .map(
-                        (e) => Center(
-                      child: Text(
-                        e,
-                        style: const TextStyle(fontFamily: 'Epilogue'),
-                      ),
-                    ),
-                  )
-                      .toList(),
+                  children: options.map((e) => Center(child: Text(e))).toList(),
                 ),
               ),
             ],
@@ -185,24 +163,14 @@ class _InfoInputPageState extends State<InfoInputPage> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Text(
-              '취소',
-              style: TextStyle(color: Colors.blue, fontSize: 16),
-            ),
+            child: const Text('취소', style: TextStyle(color: Colors.blue, fontSize: 16)),
           ),
-          Text(
-            title,
-            style:
-            const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           GestureDetector(
             onTap: onConfirm,
             child: const Text(
               '완료',
-              style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -210,12 +178,10 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
-  // ------------------ 서버 저장 ------------------
+  // ------------------ 프로필 서버 저장 ------------------
   Future<void> _saveProfile() async {
     try {
-      final dio = Dio(
-        BaseOptions(baseUrl: ApiConfig.baseUrl),
-      );
+      final dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
 
       final data = {
         "guardian_name": _guardianController.text,
@@ -227,10 +193,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
         "weight": _weightController.text,
       };
 
-      await dio.put(
-        "/my_page/${widget.userId}",
-        data: data,
-      );
+      await dio.put("/my_page/${widget.userId}", data: data);
 
       print("프로필 저장 성공");
     } catch (e) {
@@ -238,54 +201,33 @@ class _InfoInputPageState extends State<InfoInputPage> {
     }
   }
 
-  // ------------------ UI ------------------
   @override
   Widget build(BuildContext context) {
-    const Color backgroundColor = Color(0xFFF0E8DD);
-    const Color buttonColor = Color(0xFFED6D11);
+    return CommonFrame(
+      userId: widget.userId,
+      currentIndex: 4,
+      onTapNav: (_) {},
+      showBackButton: true,
+      hideBottomNav: true,
+      showSettingsIcon: false,
+      title: "정보 입력",
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          '정보 입력',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Epilogue',
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           children: [
             const SizedBox(height: 20),
 
-            // ------------------ 사용자 정보 ------------------
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 '[사용자 정보]',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Epilogue',
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 16),
 
-            _buildInputBox('보호자 이름', _guardianController),
-
+            _buildInputBox("보호자 이름", _guardianController),
             const SizedBox(height: 40),
 
             // ------------------ 반려동물 정보 ------------------
@@ -293,23 +235,19 @@ class _InfoInputPageState extends State<InfoInputPage> {
               alignment: Alignment.centerLeft,
               child: Text(
                 '[반려동물 정보]',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Epilogue',
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 16),
 
-            _buildInputBox('반려동물 이름', _petNameController),
+            _buildInputBox("반려동물 이름", _petNameController),
             const SizedBox(height: 12),
 
-            _buildInputBox('종', _speciesController),
+            _buildInputBox("종", _speciesController),
             const SizedBox(height: 12),
 
             _buildInputBox(
-              '생년월일',
+              "생년월일",
               _birthController,
               onTap: _selectDate,
               icon: Icons.calendar_today_outlined,
@@ -320,7 +258,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
               children: [
                 Expanded(
                   child: _buildInputBox(
-                    '성별',
+                    "성별",
                     _genderController,
                     onTap: _selectGender,
                     icon: Icons.keyboard_arrow_down,
@@ -329,7 +267,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInputBox(
-                    '중성화',
+                    "중성화",
                     _neuteredController,
                     onTap: _selectNeutered,
                     icon: Icons.keyboard_arrow_down,
@@ -339,17 +277,15 @@ class _InfoInputPageState extends State<InfoInputPage> {
             ),
             const SizedBox(height: 12),
 
-            _buildInputBox('몸무게', _weightController),
-
+            _buildInputBox("몸무게", _weightController),
             const SizedBox(height: 50),
 
-            // ------------------ 확인 버튼 ------------------
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
+                  backgroundColor: const Color(0xFFED6D11),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -367,12 +303,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
                 },
                 child: const Text(
                   '확인',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Epilogue',
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ),
@@ -382,7 +313,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
-  // ------------------ 입력 박스 공통 UI ------------------
+  // ------------------ 입력 박스 공통 컴포넌트 ------------------
   Widget _buildInputBox(
       String label,
       TextEditingController controller, {
@@ -399,34 +330,17 @@ class _InfoInputPageState extends State<InfoInputPage> {
       ),
       child: Row(
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Epilogue',
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(width: 15),
-          const Text(
-            '|',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-          ),
+          const Text('|', style: TextStyle(color: Colors.grey)),
           const SizedBox(width: 15),
 
-          // input
           Expanded(
             child: TextField(
               controller: controller,
               readOnly: onTap != null,
               onTap: onTap,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                isDense: true,
-              ),
+              decoration: const InputDecoration(border: InputBorder.none, isDense: true),
             ),
           ),
 

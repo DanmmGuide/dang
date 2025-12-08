@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../main.dart';              // RootScreen
 import '../../network/api_config.dart';
 import 'info_input_page.dart';
 
@@ -25,6 +27,62 @@ class _LoginPageState extends State<LoginPage> {
     _idController.dispose();
     _pwController.dispose();
     super.dispose();
+  }
+
+  // 로그인 이후, my_page 존재 여부에 따라 분기
+  Future<void> _routeAfterLogin(int userId) async {
+    final dio = Dio(
+      BaseOptions(baseUrl: ApiConfig.baseUrl),
+    );
+
+    try {
+      final res = await dio.get("/my_page/$userId");
+      final data = res.data;
+
+      final bool hasProfile =
+          data != null &&
+              (
+                  (data["guardian_name"]?.toString().isNotEmpty ?? false) ||
+                      (data["pet_name"]?.toString().isNotEmpty ?? false)
+              );
+
+      if (!mounted) return;
+
+      if (hasProfile) {
+        // 이미 프로필 있음 → 메인으로
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RootScreen(userId: userId),
+          ),
+        );
+      } else {
+        // 프로필 비어있음 → 최초 정보 입력
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => InfoInputPage(userId: userId),
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      if (!mounted) return;
+
+      // 프로필 아예 없으면 404로 내려오는 경우 → 최초 정보 입력
+      if (e.response?.statusCode == 404) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => InfoInputPage(userId: userId),
+          ),
+        );
+      } else {
+        debugPrint("프로필 확인 오류: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("프로필 확인 중 오류가 발생했습니다.")),
+        );
+      }
+    }
   }
 
   Future<void> _onLoginPressed() async {
@@ -57,10 +115,10 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (resp.statusCode != 200) {
-        // 서버에서 에러 메시지 내려왔으면 한 번 깨끗하게 보여주기
         try {
           final Map<String, dynamic> json = jsonDecode(resp.body);
-          final msg = json['error']?.toString() ?? '로그인 실패 (${resp.statusCode})';
+          final msg =
+              json['error']?.toString() ?? '로그인 실패 (${resp.statusCode})';
           throw Exception(msg);
         } catch (_) {
           throw Exception('로그인 실패 (${resp.statusCode})');
@@ -80,13 +138,8 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // ✅ 로그인 성공 → InfoInputPage로 userId 전달
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => InfoInputPage(userId: userId),
-        ),
-      );
+      // ✅ 로그인 성공 후 프로필 유무에 따라 분기
+      await _routeAfterLogin(userId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,8 +196,11 @@ class _LoginPageState extends State<LoginPage> {
                         return Container(
                           color: Colors.grey[300],
                           child: const Center(
-                            child: Icon(Icons.image_not_supported,
-                                size: 50, color: Colors.grey),
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
                           ),
                         );
                       },
@@ -215,10 +271,12 @@ class _LoginPageState extends State<LoginPage> {
                       borderSide:
                       BorderSide(color: Colors.black.withOpacity(0.2)),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFED6D11), width: 2),
+                    focusedBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(24)),
+                      borderSide: BorderSide(
+                        color: Color(0xFFED6D11),
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -273,10 +331,12 @@ class _LoginPageState extends State<LoginPage> {
                       borderSide:
                       BorderSide(color: Colors.black.withOpacity(0.2)),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFED6D11), width: 2),
+                    focusedBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(24)),
+                      borderSide: BorderSide(
+                        color: Color(0xFFED6D11),
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -291,7 +351,8 @@ class _LoginPageState extends State<LoginPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFED6D11),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                       elevation: 0,
                     ),
                     onPressed: _isLoading ? null : _onLoginPressed,
