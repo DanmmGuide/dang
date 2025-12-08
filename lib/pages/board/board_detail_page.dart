@@ -5,31 +5,49 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'post.dart';
-
 import '../../network/api_config.dart';
 
 class BoardDetailPage extends StatefulWidget {
-  final PostItem post;
+  final PostItem post; // 목록에서 넘어온 간단 정보 (id, title 등)
+  final int userId;    // ✅ 현재 로그인한 유저 id
 
-  const BoardDetailPage({super.key, required this.post});
+  const BoardDetailPage({
+    super.key,
+    required this.post,
+    required this.userId,
+  });
 
   @override
   State<BoardDetailPage> createState() => _BoardDetailPageState();
 }
 
 class _BoardDetailPageState extends State<BoardDetailPage> {
-  // ✅ 서버 주소 (BoardPage, WritePostPage와 동일)
+  // ✅ 서버 주소 (BoardPage, WritePostPage랑 통일)
   final String _baseUrl = ApiConfig.baseUrl;
 
   late PostItem _post;
   bool _isLoading = true;
   String? _errorMessage;
 
+  // ✅ 좋아요 상태
+  bool _isLiking = false;
+  bool _likedByMe = false; // 서버에서 liked_by_me 내려주면 사용
+
+  // ✅ 댓글 입력 상태 (팝업 X, 화면 아래 인풋바)
+  final TextEditingController _commentController = TextEditingController();
+  bool _isSendingComment = false;
+
   @override
   void initState() {
     super.initState();
     _post = widget.post;
     _loadDetail();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDetail() async {
@@ -40,8 +58,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     });
 
     try {
-      // 🔥 GET /api/posts/<id>
-      final uri = Uri.parse('$_baseUrl/posts/${_post.id}');
+      // 🔥 userId를 쿼리스트링으로 같이 보냄
+      final uri = Uri.parse('$_baseUrl/posts/${_post.id}?user_id=${widget.userId}');
       final resp = await http.get(uri);
 
       if (resp.statusCode != 200) {
@@ -58,6 +76,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
       setState(() {
         _post = detailPost;
+
+        // ✅ 서버에서 내려준 liked_by_me 반영
+        if (postJson.containsKey('liked_by_me')) {
+          _likedByMe = postJson['liked_by_me'] == true;
+        }
       });
     } catch (e) {
       setState(() {
@@ -72,6 +95,108 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     }
   }
 
+
+  // ------------------ 좋아요 토글 ------------------
+  Future<void> _toggleLike() async {
+    if (_post.id == null || _isLiking) return;
+
+    setState(() {
+      _isLiking = true;
+    });
+
+    try {
+      final uri = Uri.parse('$_baseUrl/posts/${_post.id}/like');
+
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': widget.userId,
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final Map<String, dynamic> json = jsonDecode(resp.body);
+      if (json['ok'] != true) {
+        throw Exception(json['error'] ?? '좋아요 실패');
+      }
+
+      final bool liked = json['liked'] == true;
+
+      setState(() {
+        _likedByMe = liked;
+        if (liked) {
+          _post.likes += 1;
+        } else {
+          if (_post.likes > 0) _post.likes -= 1;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다.\n$e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLiking = false;
+        });
+      }
+    }
+  }
+
+  // ------------------ 댓글 전송 ------------------
+  Future<void> _submitComment() async {
+    final content = _commentController.text.trim();
+    if (content.isEmpty || _post.id == null || _isSendingComment) return;
+
+    setState(() {
+      _isSendingComment = true;
+    });
+
+    try {
+      final uri = Uri.parse('$_baseUrl/posts/${_post.id}/comments');
+
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': widget.userId,
+          'content': content,
+        }),
+      );
+
+      if (resp.statusCode != 201) {
+        throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final Map<String, dynamic> json = jsonDecode(resp.body);
+      if (json['ok'] != true) {
+        throw Exception(json['error'] ?? '댓글 등록 실패');
+      }
+
+      _commentController.clear();
+
+      // ✅ 댓글 목록/개수 다시 불러오기
+      await _loadDetail();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글 등록 중 오류가 발생했습니다.\n$e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSendingComment = false;
+        });
+      }
+    }
+  }
+
+  // ------------------ UI ------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,6 +217,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
         centerTitle: true,
       ),
       body: _buildBody(),
+      // ✅ 팝업 대신 화면 아래에 고정된 댓글 입력바
+      bottomNavigationBar: _buildCommentInputBar(),
     );
   }
 
@@ -162,19 +289,28 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           ),
           const SizedBox(height: 12),
 
-          // 좋아요 / 댓글 수
+          // ✅ 좋아요 / 댓글 수 (UI는 예전 그대로, 좋아요만 토글 가능)
           Row(
             children: [
-              const Icon(Icons.favorite_border,
-                  size: 18, color: Color(0xFF8F7A64)),
+              GestureDetector(
+                onTap: _isLiking ? null : _toggleLike,
+                child: Icon(
+                  _likedByMe ? Icons.favorite : Icons.favorite_border,
+                  size: 18,
+                  color: const Color(0xFF8F7A64),
+                ),
+              ),
               const SizedBox(width: 4),
               Text(
                 '${_post.likes}',
                 style: const TextStyle(fontSize: 12),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.chat_bubble_outline,
-                  size: 18, color: Color(0xFF8F7A64)),
+              const Icon(
+                Icons.chat_bubble_outline,
+                size: 18,
+                color: Color(0xFF8F7A64),
+              ),
               const SizedBox(width: 4),
               Text(
                 '${_post.comments}',
@@ -234,13 +370,15 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           ),
           const SizedBox(height: 24),
 
-          // 댓글 영역
+          // 댓글 영역 (옛날 UI 그대로)
           _buildCommentsSection(),
+          const SizedBox(height: 80), // 아래 인풋바랑 겹치지 않도록 여백
         ],
       ),
     );
   }
 
+  // ------------------ 댓글 리스트 (옛날 UI 그대로) ------------------
   Widget _buildCommentsSection() {
     final comments = _post.commentItems;
 
@@ -274,8 +412,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               return Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(vertical: 4),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5EDE2),
                   borderRadius: BorderRadius.circular(12),
@@ -318,6 +458,79 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             }).toList(),
           ),
       ],
+    );
+  }
+
+  // ------------------ 화면 아래 댓글 입력 바 ------------------
+  Widget _buildCommentInputBar() {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF5EDE2),
+          border: Border(
+            top: BorderSide(color: Color(0xFFE3D7C8), width: 1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _commentController,
+                minLines: 1,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: '댓글을 입력하세요',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFFB6A795),
+                    fontSize: 13,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFDF7F0),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFD0C1AE),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8F7A64),
+                  padding: EdgeInsets.zero,
+                  shape: const CircleBorder(),
+                ),
+                onPressed: _isSendingComment ? null : _submitComment,
+                child: _isSendingComment
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor:
+                    AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                    : const Icon(
+                  Icons.send,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
