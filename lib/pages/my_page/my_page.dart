@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 
+import '../../network/api_config.dart';
+
 class MyPage extends StatefulWidget {
 
   final int userId;
@@ -593,10 +595,11 @@ class _MyPageState extends State<MyPage> {
       ),
     );
   }
-
   Future<void> _saveProfile() async {
     try {
-      final dio = Dio();
+      final dio = Dio(
+        BaseOptions(baseUrl: ApiConfig.baseUrl),
+      );
 
       final data = {
         "guardian_name": _guardianController.text,
@@ -609,20 +612,22 @@ class _MyPageState extends State<MyPage> {
       };
 
       await dio.put(
-        "http://localhost:5000/api/my_page/${widget.userId}",
+        "/my_page/${widget.userId}",
         data: data,
       );
-
     } catch (e) {
       print("프로필 저장 오류: $e");
     }
   }
+
   Future<void> _loadMypage() async {
     try {
-      final dio = Dio();
+      final dio = Dio(
+        BaseOptions(baseUrl: ApiConfig.baseUrl),
+      );
 
       final res = await dio.get(
-        "http://localhost:5000/api/my_page/${widget.userId}",
+        "/my_page/${widget.userId}",
       );
 
       final data = res.data;
@@ -638,10 +643,10 @@ class _MyPageState extends State<MyPage> {
           _weightController.text = data["weight"] ?? '';
         });
       }
-
     } catch (e) {
       print("마이페이지 불러오기 오류: $e");
     }
   }
+
 
 }

@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 
 import 'post.dart';
 
+import '../../network/api_config.dart';
+
 class BoardDetailPage extends StatefulWidget {
   final PostItem post;
 
@@ -17,7 +19,7 @@ class BoardDetailPage extends StatefulWidget {
 
 class _BoardDetailPageState extends State<BoardDetailPage> {
   // ✅ 서버 주소 (BoardPage, WritePostPage와 동일)
-  static const String _baseUrl = 'http://10.0.2.2:5000/api';
+  final String _baseUrl = ApiConfig.baseUrl;
 
   late PostItem _post;
   bool _isLoading = true;

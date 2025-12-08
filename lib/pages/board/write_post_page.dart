@@ -1,12 +1,11 @@
 // lib/pages/board/write_post_page.dart
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-
+import '../../network/api_config.dart';
 import 'post.dart';
 
 class WritePostPage extends StatefulWidget {
@@ -23,7 +22,7 @@ class _WritePostPageState extends State<WritePostPage> {
   final ImagePicker _picker = ImagePicker();
 
   // ✅ 서버 주소 (게시판 API prefix까지만)
-  static const String _baseUrl = 'http://10.0.2.2:5000/api';
+  static const String _baseUrl = ApiConfig.baseUrl;
 
   // 여러 장 이미지 (최대 10장)
   List<XFile> _images = [];

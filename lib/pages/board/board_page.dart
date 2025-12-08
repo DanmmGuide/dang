@@ -8,6 +8,8 @@ import 'write_post_page.dart';
 import 'post.dart';
 import 'board_detail_page.dart';
 
+import '../../network/api_config.dart';
+
 class BoardPage extends StatefulWidget {
   const BoardPage({super.key});
 
@@ -17,7 +19,7 @@ class BoardPage extends StatefulWidget {
 
 class _BoardPageState extends State<BoardPage> {
   // ✅ Flask 서버 주소 (에뮬레이터 → PC)
-  static const String _baseUrl = 'http://10.0.2.2:5000/api';
+  final String _baseUrl = ApiConfig.baseUrl;
 
   List<PostItem> _allPosts = []; // 이제 하드코딩 대신 서버 데이터
   String _selectedFilter = '전체';
