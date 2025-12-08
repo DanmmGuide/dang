@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -134,7 +134,14 @@ class _LoginPageState extends State<LoginPage> {
       final Map<String, dynamic> user =
       json['user'] as Map<String, dynamic>;
 
+      // 🔥 여기서 userId + username 꺼내기
       final int userId = user['id'] as int;
+      final String userName = user['username'] as String;
+
+      // 🔥 SharedPreferences에 로그인 정보 저장
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('user_id', userId);
+      await prefs.setString('username', userName);
 
       if (!mounted) return;
 
@@ -356,9 +363,9 @@ class _LoginPageState extends State<LoginPage> {
                       elevation: 0,
                     ),
                     onPressed: _isLoading ? null : _onLoginPressed,
-                    child: const Text(
-                      '로그인',
-                      style: TextStyle(
+                    child: Text(
+                      _isLoading ? '로그인 중...' : '로그인',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
