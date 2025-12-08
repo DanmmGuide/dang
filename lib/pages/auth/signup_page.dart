@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:http/http.dart' as http;
+
+import '../../network/api_config.dart';
 import 'login_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -21,6 +26,8 @@ class _SignupPageState extends State<SignupPage> {
   // 중복확인 상태 변수
   bool _isIdChecked = false;
 
+  bool _isSubmitting = false;
+
   // 서비스 이용약관 전문
   final String _termsOfService = '''
 제1조 (목적)
@@ -39,9 +46,9 @@ class _SignupPageState extends State<SignupPage> {
 제4조 (회원가입)
 1. 이용자는 회사가 정한 가입 양식에 따라 회원정보를 기입한 후 본 약관에 동의한다는 의사표시를 함으로써 회원가입을 신청합니다.
 2. 회사는 다음 각 호에 해당하는 경우 회원가입을 승낙하지 않거나 유보할 수 있습니다.
-  - 실명이 아니거나 타인의 명의를 이용한 경우
-  - 허위 정보를 기재하거나, 회사가 제시하는 내용을 기재하지 않은 경우
-  - 이용자의 귀책사유로 인하여 승인이 불가능하거나 기타 규정한 제반 사항을 위반하며 신청하는 경우
+ - 실명이 아니거나 타인의 명의를 이용한 경우
+ - 허위 정보를 기재하거나, 회사가 제시하는 내용을 기재하지 않은 경우
+ - 이용자의 귀책사유로 인하여 승인이 불가능하거나 기타 규정한 제반 사항을 위반하며 신청하는 경우
 
 제5조 (회원의 의무)
 1. 회원은 관계법령, 본 약관의 규정, 이용안내 및 서비스와 관련하여 공지한 주의사항, 회사가 통지하는 사항 등을 준수해야 하며, 기타 회사의 업무에 방해되는 행위를 하여서는 안 됩니다.
@@ -49,10 +56,10 @@ class _SignupPageState extends State<SignupPage> {
 
 제6조 (서비스의 제공 및 변경)
 1. 회사는 회원에게 아래와 같은 서비스를 제공합니다.
-  - 반려동물 프로필 관리 서비스
-  - 반려동물 관련 정보 제공 서비스
-  - 커뮤니티(게시판) 서비스
-  - 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 회원에게 제공하는 일체의 서비스
+ - 반려동물 프로필 관리 서비스
+ - 반려동물 관련 정보 제공 서비스
+ - 커뮤니티(게시판) 서비스
+ - 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 회원에게 제공하는 일체의 서비스
 2. 회사는 운영상, 기술상의 필요에 따라 제공하고 있는 전부 또는 일부 서비스를 변경할 수 있습니다.
 
 제7조 (계약 해지 및 이용 제한)
@@ -64,29 +71,29 @@ class _SignupPageState extends State<SignupPage> {
   final String _privacyPolicy = '''
 1. 개인정보의 수집 및 이용 목적
 '댕가이드'는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
-- 회원 가입 의사 확인, 회원 식별/인증, 회원자격 유지/관리
-- 서비스 부정이용 방지, 각종 고지/통지, 고충처리
-- 반려동물 맞춤형 콘텐츠 및 정보 제공
+ - 회원 가입 의사 확인, 회원 식별/인증, 회원자격 유지/관리
+ - 서비스 부정이용 방지, 각종 고지/통지, 고충처리
+ - 반려동물 맞춤형 콘텐츠 및 정보 제공
 
 2. 수집하는 개인정보의 항목
 회사는 회원가입, 고객상담, 서비스 신청 등을 위해 아래와 같은 개인정보를 수집하고 있습니다.
-가. 필수항목: 아이디, 비밀번호
-나. 선택항목(서비스 이용 중 수집): 반려동물 정보(이름, 견종, 생년월일, 성별, 중성화 여부, 몸무게 등)
-다. 서비스 이용 과정에서 자동 수집 정보: 접속 로그, 접속 IP 정보, 쿠키, 기기정보, 서비스 이용 기록
+ 가. 필수항목: 아이디, 비밀번호
+ 나. 선택항목(서비스 이용 중 수집): 반려동물 정보(이름, 견종, 생년월일, 성별, 중성화 여부, 몸무게 등)
+ 다. 서비스 이용 과정에서 자동 수집 정보: 접속 로그, 접속 IP 정보, 쿠키, 기기정보, 서비스 이용 기록
 
 3. 개인정보의 보유 및 이용 기간
 이용자의 개인정보는 원칙적으로 개인정보의 수집 및 이용목적이 달성되면 지체 없이 파기합니다. 단, 다음의 정보에 대해서는 아래의 이유로 명시한 기간 동안 보존합니다.
-- 보존 항목: 아이디, 서비스 이용기록
-- 보존 근거: 서비스 이용의 혼선 방지, 부정이용 방지
-- 보존 기간: 회원 탈퇴 후 3개월
+ - 보존 항목: 아이디, 서비스 이용기록
+ - 보존 근거: 서비스 이용의 혼선 방지, 부정이용 방지
+ - 보존 기간: 회원 탈퇴 후 3개월
 
 4. 개인정보의 파기절차 및 방법
 회사는 원칙적으로 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체 없이 파기합니다. 파기절차 및 방법은 다음과 같습니다.
-- 파기절차: 이용자가 회원가입 등을 위해 입력한 정보는 목적이 달성된 후 별도의 DB로 옮겨져(종이의 경우 별도의 서류함) 내부 방침 및 기타 관련 법령에 의한 정보보호 사유에 따라(보유 및 이용기간 참조) 일정 기간 저장된 후 파기됩니다.
-- 파기방법: 전자적 파일형태로 저장된 개인정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 삭제합니다.
+ - 파기절차: 이용자가 회원가입 등을 위해 입력한 정보는 목적이 달성된 후 별도의 DB로 옮겨져(종이의 경우 별도의 서류함) 내부 방침 및 기타 관련 법령에 의한 정보보호 사유에 따라(보유 및 이용기간 참조) 일정 기간 저장된 후 파기됩니다.
+ - 파기방법: 전자적 파일형태로 저장된 개인정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 삭제합니다.
 
 5. 이용자 및 법정대리인의 권리와 그 행사방법
-이용자는 언제든지 등록되어 있는 자신의 개인정보를 조회하거나 수정할 수 있으며 가입해지를 요청할 수 있습니다. 이용자의 개인정보 조회/수정을 위해서는 '개인정보변경'(또는 '회원정보수정' 등)을, 가입해지(동의철회)를 위해서는 "회원탈퇴"를 클릭하여 본인 확인 절차를 거치신 후 직접 열람, 정정 또는 탈퇴가 가능합니다.
+이용자는 언제든지 등록되어 있는 자신의 개인정보를 조회하거나 수정할 수 있으며 가입해지를 요청할 수 있습니다.
 ''';
 
   @override
@@ -110,33 +117,78 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  // 중복확인 로직
-  void _checkIdDuplicate() {
-    if (_idController.text.isEmpty) {
+  // 🔹 아이디 중복확인 (서버 /users/check 사용)
+  Future<void> _checkIdDuplicate() async {
+    final username = _idController.text.trim();
+
+    if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('아이디를 입력해주세요.')),
       );
       return;
     }
 
-    setState(() {
-      _isIdChecked = true;
-    });
+    try {
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/users/check?username=$username',
+      );
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: const Text('사용 가능한 아이디입니다.', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인', style: TextStyle(color: Color(0xFFED6D11), fontWeight: FontWeight.bold)),
+      final resp = await http.get(uri);
+
+      if (resp.statusCode != 200) {
+        throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final Map<String, dynamic> json = jsonDecode(resp.body);
+
+      if (json['ok'] != true) {
+        throw Exception(json['error'] ?? '중복확인 실패');
+      }
+
+      final bool exists = json['exists'] as bool;
+
+      if (exists) {
+        setState(() {
+          _isIdChecked = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미 사용 중인 아이디입니다.')),
+        );
+      } else {
+        setState(() {
+          _isIdChecked = true;
+        });
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            content: const Text(
+              '사용 가능한 아이디입니다.',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  '확인',
+                  style: TextStyle(
+                    color: Color(0xFFED6D11),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('중복확인 실패: $e')),
+      );
+    }
   }
 
   void _showTermDialog(String title, String content) {
@@ -144,19 +196,132 @@ class _SignupPageState extends State<SignupPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
-          child: Text(content, style: const TextStyle(fontSize: 13, height: 1.6, color: Colors.black87)),
+          child: Text(
+            content,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.6,
+              color: Colors.black87,
+            ),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('닫기', style: TextStyle(color: Color(0xFFED6D11), fontWeight: FontWeight.bold)),
+            child: const Text(
+              '닫기',
+              style: TextStyle(
+                color: Color(0xFFED6D11),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  // 🔹 회원가입 요청 (/users/register)
+  Future<void> _submitSignup() async {
+    if (_idController.text.isEmpty ||
+        _pwController.text.isEmpty ||
+        _pwCheckController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 정보를 입력해주세요.')),
+      );
+      return;
+    }
+
+    if (!_isIdChecked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('아이디 중복확인을 해주세요.')),
+      );
+      return;
+    }
+
+    if (_pwController.text != _pwCheckController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
+      );
+      return;
+    }
+
+    if (!_isAgreed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('약관에 동의해주세요.')),
+      );
+      return;
+    }
+
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/users/register');
+
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': _idController.text.trim(),
+          'password': _pwController.text.trim(),
+        }),
+      );
+
+      if (resp.statusCode == 409) {
+        // 이미 존재하는 username
+        setState(() {
+          _isIdChecked = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미 존재하는 아이디입니다.')),
+        );
+        return;
+      }
+
+      if (resp.statusCode != 201) {
+        throw Exception('status: ${resp.statusCode}, body: ${resp.body}');
+      }
+
+      final Map<String, dynamic> json = jsonDecode(resp.body);
+
+      if (json['ok'] != true) {
+        throw Exception(json['error'] ?? '회원가입 실패');
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('회원가입을 축하합니다!')),
+      );
+
+      // 가입 완료 후 로그인 페이지로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('회원가입 실패: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -181,7 +346,8 @@ class _SignupPageState extends State<SignupPage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 402),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -198,7 +364,6 @@ class _SignupPageState extends State<SignupPage> {
 
                 // 1. 아이디 입력 (중복확인 버튼 포함)
                 _buildIdFieldWithButton(),
-
                 const SizedBox(height: 20),
 
                 // 2. 비밀번호
@@ -207,7 +372,8 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _pwController,
                   hint: '비밀번호를 입력하세요',
                   isObscure: _obscurePw,
-                  onToggleObscure: () => setState(() => _obscurePw = !_obscurePw),
+                  onToggleObscure: () =>
+                      setState(() => _obscurePw = !_obscurePw),
                 ),
                 const SizedBox(height: 20),
 
@@ -217,9 +383,9 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _pwCheckController,
                   hint: '비밀번호를 한번 더 입력하세요',
                   isObscure: _obscurePwCheck,
-                  onToggleObscure: () => setState(() => _obscurePwCheck = !_obscurePwCheck),
+                  onToggleObscure: () =>
+                      setState(() => _obscurePwCheck = !_obscurePwCheck),
                 ),
-
                 const SizedBox(height: 24),
 
                 // 4. 약관 동의
@@ -232,8 +398,10 @@ class _SignupPageState extends State<SignupPage> {
                       child: Checkbox(
                         value: _isAgreed,
                         activeColor: const Color(0xFFED6D11),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        side: BorderSide(color: Colors.black.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                        side: BorderSide(
+                            color: Colors.black.withOpacity(0.5)),
                         onChanged: (value) {
                           setState(() {
                             _isAgreed = value ?? false;
@@ -253,19 +421,27 @@ class _SignupPageState extends State<SignupPage> {
                           children: [
                             TextSpan(
                               text: '[필수] 서비스 이용약관',
-                              style: const TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
-                                  _showTermDialog('서비스 이용약관', _termsOfService);
+                                  _showTermDialog(
+                                      '서비스 이용약관', _termsOfService);
                                 },
                             ),
                             const TextSpan(text: ' 및 '),
                             TextSpan(
                               text: '[필수] 개인정보 처리방침',
-                              style: const TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
-                                  _showTermDialog('개인정보 처리방침', _privacyPolicy);
+                                  _showTermDialog(
+                                      '개인정보 처리방침', _privacyPolicy);
                                 },
                             ),
                             const TextSpan(text: '에 동의합니다.'),
@@ -290,47 +466,7 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       elevation: 0,
                     ),
-                    onPressed: () {
-                      if (_idController.text.isEmpty ||
-                          _pwController.text.isEmpty ||
-                          _pwCheckController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('모든 정보를 입력해주세요.')),
-                        );
-                        return;
-                      }
-
-                      // 중복확인 체크
-                      if (!_isIdChecked) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('아이디 중복확인을 해주세요.')),
-                        );
-                        return;
-                      }
-
-                      if (_pwController.text != _pwCheckController.text) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
-                        );
-                        return;
-                      }
-
-                      if (!_isAgreed) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('약관에 동의해주세요.')),
-                        );
-                        return;
-                      }
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('회원가입을 축하합니다!')),
-                      );
-
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                      );
-                    },
+                    onPressed: _isSubmitting ? null : _submitSignup,
                     child: const Text(
                       '가입 완료',
                       style: TextStyle(
@@ -376,7 +512,8 @@ class _SignupPageState extends State<SignupPage> {
                     color: Colors.black.withOpacity(0.2),
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
                   controller: _idController,
                   style: const TextStyle(fontSize: 14),
@@ -385,7 +522,8 @@ class _SignupPageState extends State<SignupPage> {
                     hintText: '아이디를 입력하세요',
                     hintStyle: TextStyle(color: Colors.grey),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 13),
+                    contentPadding:
+                    EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),
               ),
@@ -396,7 +534,9 @@ class _SignupPageState extends State<SignupPage> {
               child: ElevatedButton(
                 onPressed: _checkIdDuplicate,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isIdChecked ? Colors.grey : const Color(0xFFED6D11),
+                  backgroundColor: _isIdChecked
+                      ? Colors.grey
+                      : const Color(0xFFED6D11),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -457,11 +597,14 @@ class _SignupPageState extends State<SignupPage> {
               hintText: hint,
               hintStyle: const TextStyle(color: Colors.grey),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              contentPadding:
+              const EdgeInsets.symmetric(vertical: 12),
               suffixIcon: onToggleObscure != null
                   ? IconButton(
                 icon: Icon(
-                  isObscure ? Icons.visibility_off : Icons.visibility,
+                  isObscure
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   color: Colors.grey,
                 ),
                 onPressed: onToggleObscure,

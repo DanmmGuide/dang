@@ -11,6 +11,9 @@ class CommonFrame extends StatelessWidget {
   final String? title;
   final bool showSettingsIcon;
 
+  /// ✅ 추가: 이 프레임이 알고 있는 로그인 유저 id
+  final int userId;
+
   const CommonFrame({
     super.key,
     required this.body,
@@ -20,6 +23,7 @@ class CommonFrame extends StatelessWidget {
     this.hideBottomNav = false,
     this.title,
     this.showSettingsIcon = true,
+    this.userId = 1,        // ✅ 기본값 1 (로그인 붙이기 전 테스트용)
   });
 
   @override
@@ -57,7 +61,8 @@ class CommonFrame extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const SettingsPage(),
+                    // ✅ 여기서 CommonFrame이 가진 userId를 넘김
+                    builder: (_) => SettingsPage(userId: userId),
                   ),
                 );
               },
@@ -76,7 +81,6 @@ class CommonFrame extends StatelessWidget {
     return Container(
       height: 75,
       decoration: const BoxDecoration(
-        // color: Colors.white, // ❌ 제거됨 (아래 Material로 이동)
         border: Border(
           top: BorderSide(color: Color(0xFFF4F2EF), width: 1),
         ),

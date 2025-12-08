@@ -27,36 +27,41 @@ class MyApp extends StatelessWidget {
       // 앱 처음 켰을 때는 StartPage부터
       home: const StartPage(),
 
-      // RootScreen을 라우트로 등록해둔다.
+      // (선택) /root 네임드 라우트로도 쓸 수 있게 해두기
+      // 필요 없으면 그냥 안 써도 됨
       routes: {
-        '/root': (context) => const RootScreen(),
+        '/root': (context) => const RootScreen(
+          userId: 1, // 임시 값 (실제 로그인 후에는 직접 MaterialPageRoute로 가는 걸 추천)
+        ),
       },
     );
   }
 }
-
 class RootScreen extends StatefulWidget {
-  final int initialIndex; // 1. 변수 추가
+  /// 로그인한 유저 id (안 넣으면 1 사용)
+  final int userId;
+
+  /// 바텀 탭 처음 인덱스 (안 넣으면 0)
+  final int initialIndex;
 
   const RootScreen({
     super.key,
-    this.initialIndex = 0, // 2. 생성자에서 받기 (기본값 0)
+    this.userId = 1,       // ✅ 기본값: 1
+    this.initialIndex = 0, // ✅ 기본값: 0
   });
 
   @override
-  State<RootScreen> createState() {
-    return _RootScreenState();
-  }
+  State<RootScreen> createState() => _RootScreenState();
 }
 
+
 class _RootScreenState extends State<RootScreen> {
-  late int _currentIndex; // 3. late 키워드 (initState에서 초기화)
+  late int _currentIndex;
   bool _isMyPageEditing = false;
 
   @override
   void initState() {
     super.initState();
-    // 4. 전달받은 initialIndex로 시작 탭 설정
     _currentIndex = widget.initialIndex;
   }
 
@@ -91,14 +96,13 @@ class _RootScreenState extends State<RootScreen> {
         return const MbtiPage();
       case 4:
         return MyPage(
-          userId: 1,   // 여기에 실제 로그인 후 받은 userId 넣어야 함
+          userId: widget.userId,   // ✅ 여기서 userId 전달
           onEditingChanged: (isEditing) {
             setState(() {
               _isMyPageEditing = isEditing;
             });
           },
         );
-
       default:
         return const HomePageClean();
     }

@@ -2,10 +2,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../pages/board/post.dart';
+import 'api_config.dart';
 
 class BoardApiClient {
   // 에뮬레이터 → PC 플라스크 서버 주소
-  static const String baseUrl = 'http://10.0.2.2:5000/api';
+  final String baseUrl = ApiConfig.baseUrl;
 
   const BoardApiClient();
 

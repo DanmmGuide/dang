@@ -3,21 +3,35 @@ import 'package:flutter/cupertino.dart';
 import '../../main.dart';
 
 class InfoInputPage extends StatefulWidget {
-  const InfoInputPage({super.key});
+  /// ✅ 로그인에서 받은 userId
+  final int userId;
+
+  const InfoInputPage({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<InfoInputPage> createState() => _InfoInputPageState();
 }
 
 class _InfoInputPageState extends State<InfoInputPage> {
-  final TextEditingController _idController = TextEditingController(text: '혀누');
-  final TextEditingController _petNameController = TextEditingController(text: '코코');
-  final TextEditingController _speciesController = TextEditingController(text: '랙돌');
-  final TextEditingController _birthController = TextEditingController(text: '2024.02.15.');
-  final TextEditingController _genderController = TextEditingController(text: '수컷');
-  final TextEditingController _neuteredController = TextEditingController(text: 'O');
-  final TextEditingController _weightController = TextEditingController(text: '7.5 kg');
-  final TextEditingController _etcController = TextEditingController(text: '-');
+  final TextEditingController _idController =
+  TextEditingController(text: '혀누');
+  final TextEditingController _petNameController =
+  TextEditingController(text: '코코');
+  final TextEditingController _speciesController =
+  TextEditingController(text: '랙돌');
+  final TextEditingController _birthController =
+  TextEditingController(text: '2024.02.15.');
+  final TextEditingController _genderController =
+  TextEditingController(text: '수컷');
+  final TextEditingController _neuteredController =
+  TextEditingController(text: 'O');
+  final TextEditingController _weightController =
+  TextEditingController(text: '7.5 kg');
+  final TextEditingController _etcController =
+  TextEditingController(text: '-');
 
   @override
   void dispose() {
@@ -36,10 +50,14 @@ class _InfoInputPageState extends State<InfoInputPage> {
   void _selectDate() {
     DateTime initialDate = DateTime.now();
     try {
-      String cleanText = _birthController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      String cleanText =
+      _birthController.text.replaceAll(RegExp(r'[^0-9]'), '');
       if (cleanText.length >= 8) {
         initialDate = DateTime.parse(
-            "${cleanText.substring(0, 4)}-${cleanText.substring(4, 6)}-${cleanText.substring(6, 8)}");
+          "${cleanText.substring(0, 4)}-"
+              "${cleanText.substring(4, 6)}-"
+              "${cleanText.substring(6, 8)}",
+        );
       }
     } catch (e) {}
 
@@ -54,24 +72,49 @@ class _InfoInputPageState extends State<InfoInputPage> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
-                      child: const Text('취소', style: TextStyle(fontFamily: 'Epilogue', color: Colors.blue, fontSize: 16)), // 👈 Epilogue
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          fontFamily: 'Epilogue',
+                          color: Colors.blue,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
-                    const Text('생년월일', style: TextStyle(fontFamily: 'Epilogue', fontSize: 16, fontWeight: FontWeight.bold)), // 👈 Epilogue
+                    const Text(
+                      '생년월일',
+                      style: TextStyle(
+                        fontFamily: 'Epilogue',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
                         setState(() {
                           _birthController.text =
-                          "${tempPickedDate.year}.${tempPickedDate.month.toString().padLeft(2, '0')}.${tempPickedDate.day.toString().padLeft(2, '0')}.";
+                          "${tempPickedDate.year}."
+                              "${tempPickedDate.month.toString().padLeft(2, '0')}."
+                              "${tempPickedDate.day.toString().padLeft(2, '0')}.";
                         });
                         Navigator.of(context).pop();
                       },
-                      child: const Text('완료', style: TextStyle(fontFamily: 'Epilogue', color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)), // 👈 Epilogue
+                      child: const Text(
+                        '완료',
+                        style: TextStyle(
+                          fontFamily: 'Epilogue',
+                          color: Colors.blue,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -110,21 +153,44 @@ class _InfoInputPageState extends State<InfoInputPage> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
-                      child: const Text('취소', style: TextStyle(fontFamily: 'Epilogue', color: Colors.blue, fontSize: 16)), // 👈 Epilogue
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          fontFamily: 'Epilogue',
+                          color: Colors.blue,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
-                    const Text('성별', style: TextStyle(fontFamily: 'Epilogue', fontSize: 16, fontWeight: FontWeight.bold)), // 👈 Epilogue
+                    const Text(
+                      '성별',
+                      style: TextStyle(
+                        fontFamily: 'Epilogue',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
                         setState(() => _genderController.text = tempSelected);
                         Navigator.of(context).pop();
                       },
-                      child: const Text('완료', style: TextStyle(fontFamily: 'Epilogue', color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)), // 👈 Epilogue
+                      child: const Text(
+                        '완료',
+                        style: TextStyle(
+                          fontFamily: 'Epilogue',
+                          color: Colors.blue,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -132,12 +198,23 @@ class _InfoInputPageState extends State<InfoInputPage> {
               const Divider(height: 1, thickness: 1),
               Expanded(
                 child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  scrollController: FixedExtentScrollController(
+                    initialItem: initialIndex,
+                  ),
                   itemExtent: 32.0,
                   onSelectedItemChanged: (int index) {
                     tempSelected = genderOptions[index];
                   },
-                  children: genderOptions.map((e) => Center(child: Text(e, style: const TextStyle(fontFamily: 'Epilogue')))).toList(), // 👈 Epilogue
+                  children: genderOptions
+                      .map(
+                        (e) => Center(
+                      child: Text(
+                        e,
+                        style: const TextStyle(fontFamily: 'Epilogue'),
+                      ),
+                    ),
+                  )
+                      .toList(),
                 ),
               ),
             ],
@@ -163,21 +240,45 @@ class _InfoInputPageState extends State<InfoInputPage> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
-                      child: const Text('취소', style: TextStyle(fontFamily: 'Epilogue', color: Colors.blue, fontSize: 16)), // 👈 Epilogue
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          fontFamily: 'Epilogue',
+                          color: Colors.blue,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
-                    const Text('중성화 여부', style: TextStyle(fontFamily: 'Epilogue', fontSize: 16, fontWeight: FontWeight.bold)), // 👈 Epilogue
+                    const Text(
+                      '중성화 여부',
+                      style: TextStyle(
+                        fontFamily: 'Epilogue',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
-                        setState(() => _neuteredController.text = tempSelected);
+                        setState(
+                                () => _neuteredController.text = tempSelected);
                         Navigator.of(context).pop();
                       },
-                      child: const Text('완료', style: TextStyle(fontFamily: 'Epilogue', color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)), // 👈 Epilogue
+                      child: const Text(
+                        '완료',
+                        style: TextStyle(
+                          fontFamily: 'Epilogue',
+                          color: Colors.blue,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -185,12 +286,23 @@ class _InfoInputPageState extends State<InfoInputPage> {
               const Divider(height: 1, thickness: 1),
               Expanded(
                 child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  scrollController: FixedExtentScrollController(
+                    initialItem: initialIndex,
+                  ),
                   itemExtent: 32.0,
                   onSelectedItemChanged: (int index) {
                     tempSelected = neuteredOptions[index];
                   },
-                  children: neuteredOptions.map((e) => Center(child: Text(e, style: const TextStyle(fontFamily: 'Epilogue')))).toList(), // 👈 Epilogue
+                  children: neuteredOptions
+                      .map(
+                        (e) => Center(
+                      child: Text(
+                        e,
+                        style: const TextStyle(fontFamily: 'Epilogue'),
+                      ),
+                    ),
+                  )
+                      .toList(),
                 ),
               ),
             ],
@@ -325,7 +437,9 @@ class _InfoInputPageState extends State<InfoInputPage> {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const RootScreen(),
+                      // ✅ userId를 RootScreen으로 전달
+                      builder: (context) =>
+                          RootScreen(userId: widget.userId),
                     ),
                         (route) => false,
                   );
@@ -348,8 +462,12 @@ class _InfoInputPageState extends State<InfoInputPage> {
     );
   }
 
-  Widget _buildInputBox(String label, TextEditingController controller,
-      {VoidCallback? onTap, IconData? icon}) {
+  Widget _buildInputBox(
+      String label,
+      TextEditingController controller, {
+        VoidCallback? onTap,
+        IconData? icon,
+      }) {
     return Container(
       height: 55,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -406,7 +524,11 @@ class _InfoInputPageState extends State<InfoInputPage> {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: onTap,
-              child: Icon(icon, color: Colors.grey.shade400, size: 20),
+              child: Icon(
+                icon,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
             ),
           ],
         ],

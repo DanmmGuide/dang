@@ -4,7 +4,13 @@ import '../auth/start_page.dart';
 import '../../main.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  /// ✅ 현재 로그인한 유저 id
+  final int userId;
+
+  const SettingsPage({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -23,7 +29,10 @@ class _SettingsPageState extends State<SettingsPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => RootScreen(initialIndex: index),
+            builder: (context) => RootScreen(
+              userId: widget.userId,   // ✅ userId 같이 전달
+              initialIndex: index,
+            ),
           ),
               (route) => false,
         );
@@ -65,7 +74,6 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // 로그아웃 버튼
           _buildSettingButton(
             label: '로그아웃',
@@ -113,7 +121,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // --- 다이얼로그 (팝업) 로직 ---
+  // --- 다이얼로그 로직 ---
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(
@@ -194,7 +202,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text(
@@ -216,7 +225,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: onConfirm,
                     child: Text(
