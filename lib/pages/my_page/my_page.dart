@@ -535,7 +535,7 @@ class _MyPageState extends State<MyPage> {
         height: 55,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFF2EDE8),
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
             color: _isEditing ? const Color(0xFFED6D11) : Colors.grey.shade300,
