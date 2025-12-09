@@ -11,17 +11,22 @@ import 'board_detail_page.dart';
 import '../../network/api_config.dart';
 
 class BoardPage extends StatefulWidget {
-  const BoardPage({super.key});
+  final int userId;
+
+  const BoardPage({
+    super.key,
+    this.userId = 1, // ✅ main에서 BoardPage()만 호출해도 에러 안 나게
+  });
 
   @override
   State<BoardPage> createState() => _BoardPageState();
 }
 
 class _BoardPageState extends State<BoardPage> {
-  // ✅ Flask 서버 주소 (에뮬레이터 → PC)
+  // ✅ Flask 서버 주소
   final String _baseUrl = ApiConfig.baseUrl;
 
-  List<PostItem> _allPosts = []; // 이제 하드코딩 대신 서버 데이터
+  List<PostItem> _allPosts = []; // 서버에서 받은 전체 게시글
   String _selectedFilter = '전체';
   int _currentPage = 1;
   static const int _pageSize = 10;
@@ -85,7 +90,6 @@ class _BoardPageState extends State<BoardPage> {
     }
   }
 
-
   List<PostItem> get _filteredPosts {
     String query = _searchController.text.trim();
 
@@ -102,7 +106,7 @@ class _BoardPageState extends State<BoardPage> {
         list.sort((a, b) => b.comments.compareTo(a.comments));
         break;
       case '최신순':
-      // 나중에 createdAt 필드로 정렬 가능
+      // 나중에 createdAt으로 정렬 가능
         break;
       case '전체':
       default:
@@ -114,7 +118,6 @@ class _BoardPageState extends State<BoardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ 로딩 / 에러 처리
     if (_isLoading) {
       return Container(
         color: const Color(0xFFF0E8DD),
@@ -157,7 +160,6 @@ class _BoardPageState extends State<BoardPage> {
       color: const Color(0xFFF0E8DD),
       child: Stack(
         children: [
-          // 메인 내용
           Column(
             children: [
               const SizedBox(height: 8),
@@ -205,9 +207,11 @@ class _BoardPageState extends State<BoardPage> {
                       height: 40,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFB79A7B)),
+                          side:
+                          const BorderSide(color: Color(0xFFB79A7B)),
                           backgroundColor: const Color(0xFFF0E3D3),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -238,7 +242,8 @@ class _BoardPageState extends State<BoardPage> {
                             ),
                             filled: true,
                             fillColor: const Color(0xFFFDF7F0),
-                            contentPadding: const EdgeInsets.symmetric(
+                            contentPadding:
+                            const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 0,
                             ),
@@ -249,8 +254,10 @@ class _BoardPageState extends State<BoardPage> {
                               ),
                             ),
                             suffixIcon: IconButton(
-                              icon: const Icon(Icons.search,
-                                  color: Color(0xFF8F7A64)),
+                              icon: const Icon(
+                                Icons.search,
+                                color: Color(0xFF8F7A64),
+                              ),
                               onPressed: () {
                                 setState(() {
                                   _currentPage = 1;
@@ -272,14 +279,13 @@ class _BoardPageState extends State<BoardPage> {
             ],
           ),
 
-          // 오른쪽 아래 플로팅 버튼 (글쓰기)
+          // 글쓰기 버튼
           Positioned(
             right: 16,
             bottom: 16,
             child: FloatingActionButton(
               backgroundColor: const Color(0xFF8F7A64),
               onPressed: () async {
-                // ✅ 글쓰기 후 true가 오면 목록 다시 로딩
                 final created = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
@@ -303,10 +309,13 @@ class _BoardPageState extends State<BoardPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BoardDetailPage(post: post),
+        builder: (_) => BoardDetailPage(
+          post: post,
+          userId: widget.userId, // ✅ 상세 화면에 유저 id 전달
+        ),
       ),
     );
-    setState(() {});
+    setState(() {}); // 돌아왔을 때 새로고침 필요시 나중에 _loadPosts()로 바꿔도 됨
   }
 
   void _openFilterSheet() {
@@ -419,7 +428,8 @@ class _PostCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFFDF7F0),
             borderRadius: BorderRadius.circular(24),
@@ -439,7 +449,6 @@ class _PostCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
 
-              // 📷 사진 있으면 카메라 아이콘 + 개수
               if (post.imagePaths.isNotEmpty) ...[
                 const Icon(Icons.photo, size: 16, color: Color(0xFF8F7A64)),
                 const SizedBox(width: 4),
