@@ -61,7 +61,9 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => InfoInputPage(userId: userId),
+            builder: (_) => InfoInputPage(
+                userId: userId
+            ),
           ),
         );
       }

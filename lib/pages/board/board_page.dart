@@ -15,7 +15,7 @@ class BoardPage extends StatefulWidget {
 
   const BoardPage({
     super.key,
-    this.userId = 1, // ✅ main에서 BoardPage()만 호출해도 에러 안 나게
+    required this.userId, // ✅ main에서 BoardPage()만 호출해도 에러 안 나게
   });
 
   @override

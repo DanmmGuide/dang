@@ -29,11 +29,6 @@ class MyApp extends StatelessWidget {
 
       // (선택) /root 네임드 라우트로도 쓸 수 있게 해두기
       // 필요 없으면 그냥 안 써도 됨
-      routes: {
-        '/root': (context) => const RootScreen(
-          userId: 1, // 임시 값 (실제 로그인 후에는 직접 MaterialPageRoute로 가는 걸 추천)
-        ),
-      },
     );
   }
 }
@@ -46,7 +41,7 @@ class RootScreen extends StatefulWidget {
 
   const RootScreen({
     super.key,
-    this.userId = 1,       // ✅ 기본값: 1
+    required this.userId,       // ✅ 기본값: 1
     this.initialIndex = 0, // ✅ 기본값: 0
   });
 
@@ -81,6 +76,7 @@ class _RootScreenState extends State<RootScreen> {
       body: body,
       hideBottomNav: _currentIndex == 4 && _isMyPageEditing,
       showBackButton: _currentIndex == 4 && _isMyPageEditing,
+      userId: widget.userId,
     );
   }
 
@@ -89,7 +85,9 @@ class _RootScreenState extends State<RootScreen> {
       case 0:
         return const HomePageClean();
       case 1:
-        return const BoardPage();
+        return BoardPage(
+            userId: widget.userId
+        );
       case 2:
         return const BreedSelectPage();
       case 3:

@@ -23,7 +23,7 @@ class CommonFrame extends StatelessWidget {
     this.hideBottomNav = false,
     this.title,
     this.showSettingsIcon = true,
-    this.userId = 1,        // ✅ 기본값 1 (로그인 붙이기 전 테스트용)
+    required this.userId,
   });
 
   @override

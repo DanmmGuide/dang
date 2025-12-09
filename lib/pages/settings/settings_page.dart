@@ -39,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
       title: '설정',
       showBackButton: true,
       showSettingsIcon: false,
+      userId: widget.userId,
       currentIndex: 4,
       onTapNav: (index) {
         Navigator.pushAndRemoveUntil(
