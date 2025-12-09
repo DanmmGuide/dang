@@ -290,34 +290,57 @@ class _InfoInputPageState extends State<InfoInputPage> {
             _buildInputBox("몸무게", _weightController),
             const SizedBox(height: 50),
 
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFED6D11),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                onPressed: () async {
-                  await _saveProfile();
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFED6D11),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        onPressed: () async {
+                          // 👉 여기서 먼저 입력값 체크
+                          final guardian = _guardianController.text.trim();
+                          final petName = _petNameController.text.trim();
+                          final species = _speciesController.text.trim();
+                          final birth = _birthController.text.trim();
+                          final gender = _genderController.text.trim();
+                          final neutered = _neuteredController.text.trim();
+                          final weight = _weightController.text.trim();
 
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RootScreen(userId: widget.userId),
+                          // 전부 필수로 체크 (원하면 여기서 일부만 골라서 필수로 바꿔도 됨)
+                          final fields = [guardian, petName, species, birth, gender, neutered, weight];
+
+                          if (fields.any((v) => v.isEmpty)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('모든 항목을 입력해 주세요.'),
+                              ),
+                            );
+                            return; // 👉 저장 및 페이지 이동 막기
+                          }
+
+                          // 🔥 여기까지 통과하면 서버 저장
+                          await _saveProfile();
+
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RootScreen(userId: widget.userId),
+                            ),
+                                (route) => false,
+                          );
+                        },
+                        child: const Text(
+                          '확인',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ),
                     ),
-                        (route) => false,
-                  );
-                },
-                child: const Text(
-                  '확인',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ),
-            ),
-          ],
+
+                  ],
         ),
       ),
       )
