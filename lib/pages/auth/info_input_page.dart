@@ -203,20 +203,30 @@ class _InfoInputPageState extends State<InfoInputPage> {
 
   @override
   Widget build(BuildContext context) {
-    return CommonFrame(
-      userId: widget.userId,
-      currentIndex: 4,
-      onTapNav: (_) {},
-      showBackButton: true,
-      hideBottomNav: true,
-      showSettingsIcon: false,
-      title: "정보 입력",
+    return Scaffold(
+        backgroundColor: const Color(0xFFF0E8DD),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF0E8DD),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          centerTitle: true,
+          title: const Text(
+            "정보 입력",
+            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+
+            body: Container(
+              color: const Color(0xFFF0E8DD),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
 
             const Align(
               alignment: Alignment.centerLeft,
@@ -310,6 +320,7 @@ class _InfoInputPageState extends State<InfoInputPage> {
           ],
         ),
       ),
+      )
     );
   }
 
